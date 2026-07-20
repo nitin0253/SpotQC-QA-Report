@@ -34,21 +34,41 @@
 
   .app-shell { max-width: 1180px; margin: 0 auto; padding: 32px 24px 80px; }
 
+  /* ---------- Masthead ---------- */
   .masthead { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;
     border-bottom: 2px solid var(--ink); padding-bottom: 18px; margin-bottom: 28px; }
   .masthead-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--teal); margin: 0 0 6px; }
+  .masthead-titlerow { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .masthead-title { font-family: var(--font-display); font-size: 32px; font-weight: 600; letter-spacing: -.01em; margin: 0; }
   .masthead-meta { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-soft); text-align: right; line-height: 1.6; }
 
+  .refresh-btn { appearance: none; background: var(--surface); border: 1px solid var(--line); color: var(--ink);
+    font-family: inherit; font-size: 13px; font-weight: 500; padding: 7px 14px 7px 12px; border-radius: 999px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px; }
+  .refresh-btn:hover { border-color: var(--teal); color: var(--teal); }
+  .refresh-btn:active { transform: translateY(1px); }
+  .refresh-btn[disabled] { opacity: .55; cursor: wait; }
+  .refresh-btn .refresh-icon { display: inline-block; font-size: 15px; line-height: 1; }
+  .refresh-btn.is-spinning .refresh-icon { animation: spin 900ms linear infinite; }
+  @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+
+  /* ---------- Tabs ---------- */
   .tab-bar { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
   .tab-btn { appearance: none; background: transparent; border: 1px solid transparent; border-bottom: none; padding: 10px 18px;
     font-size: 14px; font-weight: 500; color: var(--ink-soft); cursor: pointer; border-radius: 6px 6px 0 0; position: relative; top: 1px; font-family: inherit; }
   .tab-btn:hover { color: var(--ink); background: var(--surface); }
   .tab-btn.is-active { color: var(--ink); background: var(--surface); border-color: var(--line); border-bottom: 1px solid var(--surface); font-weight: 600; }
 
+  /* ---------- Summary ---------- */
   .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 14px; align-items: stretch; margin-bottom: 36px; }
-  .stat-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between; min-height: 96px; }
-  .stat-card-label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 10px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px;
+    display: flex; flex-direction: column; justify-content: space-between; min-height: 96px; text-align: left;
+    font-family: inherit; color: inherit; }
+  .stat-card.is-clickable { cursor: pointer; transition: border-color .12s ease, transform .12s ease; }
+  .stat-card.is-clickable:hover { border-color: var(--teal); transform: translateY(-1px); }
+  .stat-card.is-clickable:active { transform: translateY(0); }
+  .stat-card-label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center; }
+  .stat-card-hint { font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft); opacity: .7; letter-spacing: .05em; }
   .stat-card-value { font-family: var(--font-mono); font-size: 30px; font-weight: 600; line-height: 1; }
   .stat-card--approved .stat-card-value { color: var(--green); }
   .stat-card--rejected .stat-card-value { color: var(--red); }
@@ -63,8 +83,9 @@
   .stamp-value { font-family: var(--font-mono); font-size: 26px; font-weight: 700; line-height: 1.1; }
   .stamp-caption { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase; }
 
+  /* ---------- Sections + tables ---------- */
   .section { margin-bottom: 36px; }
-  .section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+  .section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
   .section-title { font-family: var(--font-display); font-size: 18px; font-weight: 600; margin: 0; }
   .section-note { font-size: 12.5px; color: var(--ink-soft); }
 
@@ -75,7 +96,17 @@
   table.ledger td { padding: 11px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
   table.ledger tbody tr:last-child td { border-bottom: none; }
   table.ledger tbody tr:hover { background: var(--bg); }
-  .num { font-family: var(--font-mono); text-align: right; }
+
+  /* Alignment fix: element+class selector needed to beat `table.ledger th` specificity */
+  table.ledger th.num,
+  table.ledger td.num { text-align: right; font-family: var(--font-mono); }
+
+  .num-btn { appearance: none; background: transparent; border: none; padding: 2px 6px; margin: -2px -6px;
+    font: inherit; color: var(--teal); cursor: pointer; border-radius: 4px; font-weight: 500;
+    text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px;
+    transition: background-color .12s, text-decoration-color .12s; }
+  .num-btn:hover { background: var(--teal-soft, #e4eeee); text-decoration-color: var(--teal); }
+  .num-zero { color: var(--ink-soft); }
 
   .rate-pill { display: inline-block; font-family: var(--font-mono); font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
   .rate-pill--high { background: var(--green-soft); color: var(--green); }
@@ -92,6 +123,37 @@
   .state-banner--error { border-color: var(--red); color: var(--red); background: var(--red-soft); }
   .muted-row td { color: var(--ink-soft); }
 
+  /* ---------- Modal (drill-down) ---------- */
+  .modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 32px 20px; }
+  .modal.is-hidden { display: none; }
+  .modal-backdrop { position: absolute; inset: 0; background: rgba(28, 35, 33, 0.42); backdrop-filter: blur(2px); }
+  .modal-panel { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: 0 24px 60px rgba(28, 35, 33, 0.22); width: min(1180px, 100%); max-height: calc(100vh - 64px);
+    display: flex; flex-direction: column; }
+  .modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+    padding: 20px 24px 16px; border-bottom: 1px solid var(--line); }
+  .modal-title-block { min-width: 0; }
+  .modal-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--teal); margin: 0 0 6px; }
+  .modal-title { font-family: var(--font-display); font-size: 20px; font-weight: 600; margin: 0 0 4px; }
+  .modal-meta { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-soft); }
+  .modal-close { appearance: none; background: transparent; border: 1px solid var(--line); border-radius: 8px;
+    width: 34px; height: 34px; font-size: 20px; line-height: 1; cursor: pointer; color: var(--ink-soft); }
+  .modal-close:hover { border-color: var(--ink); color: var(--ink); }
+  .modal-body { padding: 0; overflow: auto; }
+  .modal-body table.ledger { font-size: 13px; }
+  .modal-body table.ledger th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+  .status-tag { display: inline-block; font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: .04em; }
+  .status-tag--approved { background: var(--green-soft); color: var(--green); }
+  .status-tag--rejected { background: var(--red-soft); color: var(--red); }
+  .status-tag--other { background: var(--amber-soft); color: var(--amber); }
+  .video-link { color: var(--teal); text-decoration: none; font-weight: 500; }
+  .video-link:hover { text-decoration: underline; }
+  .cell-reason { max-width: 260px; white-space: normal; color: var(--ink); }
+  .cell-empty { color: var(--ink-soft); }
+  .modal-empty { padding: 48px 24px; text-align: center; color: var(--ink-soft); font-size: 14px; }
+  body.is-modal-open { overflow: hidden; }
+
   @media (max-width: 860px) {
     .summary-grid { grid-template-columns: repeat(2, 1fr); }
     .stamp { grid-column: span 2; justify-self: center; }
@@ -101,6 +163,8 @@
     .stamp { grid-column: span 1; }
     .masthead { flex-direction: column; align-items: flex-start; }
     .masthead-meta { text-align: left; }
+    .modal { padding: 12px; }
+    .modal-panel { max-height: calc(100vh - 24px); }
   }
 </style>
 </head>
@@ -110,12 +174,33 @@
   <header class="masthead">
     <div>
       <p class="masthead-eyebrow">Video QC · QA Review</p>
-      <h1 class="masthead-title">QA Daily Report</h1>
+      <div class="masthead-titlerow">
+        <h1 class="masthead-title">QA Daily Report</h1>
+        <button class="refresh-btn" id="refresh-btn" type="button" title="Re-fetch the sheet">
+          <span class="refresh-icon" aria-hidden="true">↻</span>
+          <span class="refresh-label">Refresh</span>
+        </button>
+      </div>
     </div>
     <div class="masthead-meta" id="masthead-meta">Loading…</div>
   </header>
   <div id="content">
     <div class="state-banner">Loading QA data…</div>
+  </div>
+</div>
+
+<div class="modal is-hidden" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-backdrop" data-modal-close></div>
+  <div class="modal-panel">
+    <div class="modal-head">
+      <div class="modal-title-block">
+        <p class="modal-eyebrow" id="modal-eyebrow"></p>
+        <h2 class="modal-title" id="modal-title"></h2>
+        <p class="modal-meta" id="modal-meta"></p>
+      </div>
+      <button class="modal-close" data-modal-close aria-label="Close">×</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
   </div>
 </div>
 
@@ -155,7 +240,6 @@ function buildDateRanges(nowUtc) {
   const yesterdayStart = addDaysUtc(todayStart, -1);
   const weekStart = addDaysUtc(todayStart, -weekday);
   const monthStart = istMidnightUtc(y, m, 1);
-
   return {
     today: { start: todayStart, end: todayEnd, label: "Today" },
     yesterday: { start: yesterdayStart, end: todayStart, label: "Yesterday (Day-1)" },
@@ -192,6 +276,9 @@ function classify(qaStatus) {
   return "other";
 }
 
+function qcUserKey(row) { return norm(row.qc_user_email_id || row.qc_user_id) || "(unknown QC user)"; }
+function qaReviewerKey(row) { return norm(row.qa_reviewer) || "(unknown reviewer)"; }
+
 function summarize(rowsWithTs) {
   let approved = 0, rejected = 0, other = 0;
   for (const { row } of rowsWithTs) {
@@ -223,9 +310,19 @@ function buildRangeReport(allRows, range) {
   const reviewed = reviewedRows(allRows);
   const inWindow = reviewed.filter((x) => inRange(x.ts, range.start, range.end));
   const summary = summarize(inWindow);
-  const byQcUser = groupByField(inWindow, (row) => row.qc_user_email_id || row.qc_user_id, "(unknown QC user)");
-  const byReviewer = groupByField(inWindow, (row) => row.qa_reviewer, "(unknown reviewer)");
-  return { label: range.label, summary, byQcUser, byReviewer };
+  const byQcUser = groupByField(inWindow, qcUserKey, "(unknown QC user)");
+  const byReviewer = groupByField(inWindow, qaReviewerKey, "(unknown reviewer)");
+  return { label: range.label, summary, byQcUser, byReviewer, inWindow };
+}
+
+// Filters the in-window rows for drill-downs.
+function filterInWindow(inWindow, { status, qcUser, qaReviewer } = {}) {
+  return inWindow.filter(({ row }) => {
+    if (status && classify(row.qa_status) !== status) return false;
+    if (qcUser && qcUserKey(row) !== qcUser) return false;
+    if (qaReviewer && qaReviewerKey(row) !== qaReviewer) return false;
+    return true;
+  });
 }
 
 // ============================================================================
@@ -238,6 +335,13 @@ function formatIST(date) {
   }).format(date) + " IST";
 }
 
+function formatISTShort(date) {
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata", day: "2-digit", month: "short",
+    hour: "2-digit", minute: "2-digit", hour12: true,
+  }).format(date);
+}
+
 function rateBucket(rate) {
   if (rate === null || rate === undefined) return "none";
   if (rate >= 90) return "high";
@@ -248,7 +352,7 @@ function rateBucket(rate) {
 function formatRate(rate) { return (rate === null || rate === undefined) ? "—" : rate.toFixed(1) + "%"; }
 
 function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  return String(str == null ? "" : str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
 function buildReportText(report) {
@@ -275,7 +379,17 @@ function buildReportText(report) {
 const TAB_ORDER = ["today", "yesterday", "thisWeek", "thisMonth", "overall"];
 let STATE = { reports: null, activeTab: "today", generatedAt: null, totalRows: 0 };
 
-function renderTable(groups, headLabel) {
+// Renders a number cell that's either a clickable button (>0) or plain zero.
+function numCell(count, drill) {
+  if (count === 0) {
+    return `<td class="num"><span class="num-zero">0</span></td>`;
+  }
+  const attrs = Object.entries(drill).map(([k, v]) => `data-${k}="${escapeHtml(v)}"`).join(" ");
+  return `<td class="num"><button class="num-btn" ${attrs}>${count}</button></td>`;
+}
+
+function renderBreakdownTable(groups, headLabel, keyDrillAttr) {
+  // keyDrillAttr: which data attribute the row-key filter should use ("qc-user" or "qa-reviewer")
   if (groups.length === 0) {
     return `<div class="table-wrap"><table class="ledger"><thead><tr>
       <th>${headLabel}</th><th class="num">Reviewed</th><th class="num">Approved</th><th class="num">Rejected</th><th class="num">Approval Rate</th>
@@ -283,9 +397,9 @@ function renderTable(groups, headLabel) {
   }
   const rows = groups.map((g) => `<tr>
     <td>${escapeHtml(g.key)}</td>
-    <td class="num">${g.reviewed}</td>
-    <td class="num">${g.approved}</td>
-    <td class="num">${g.rejected}</td>
+    ${numCell(g.reviewed, { drill: "group-reviewed", "group-type": keyDrillAttr, key: g.key })}
+    ${numCell(g.approved, { drill: "group-approved", "group-type": keyDrillAttr, key: g.key })}
+    ${numCell(g.rejected, { drill: "group-rejected", "group-type": keyDrillAttr, key: g.key })}
     <td class="num"><span class="rate-pill rate-pill--${rateBucket(g.approvalRate)}">${formatRate(g.approvalRate)}</span></td>
   </tr>`).join("");
   return `<div class="table-wrap"><table class="ledger"><thead><tr>
@@ -304,27 +418,29 @@ function render() {
     `<button class="tab-btn ${key === STATE.activeTab ? "is-active" : ""}" data-tab="${key}">${STATE.reports[key].label}</button>`
   ).join("");
 
+  const otherHint = s.other > 0 ? `<p class="stat-card-sub">${s.other} other status</p>` : "";
+
   const html = `
     <nav class="tab-bar">${tabs}</nav>
 
     <section class="summary-grid">
-      <div class="stat-card">
-        <p class="stat-card-label">Reviewed</p>
+      <button type="button" class="stat-card is-clickable" data-drill="card-reviewed">
+        <p class="stat-card-label">Reviewed <span class="stat-card-hint">view →</span></p>
         <p class="stat-card-value">${s.reviewed}</p>
-      </div>
-      <div class="stat-card stat-card--approved">
-        <p class="stat-card-label">Approved</p>
+      </button>
+      <button type="button" class="stat-card stat-card--approved is-clickable" data-drill="card-approved">
+        <p class="stat-card-label">Approved <span class="stat-card-hint">view →</span></p>
         <p class="stat-card-value">${s.approved}</p>
-      </div>
-      <div class="stat-card stat-card--rejected">
-        <p class="stat-card-label">Rejected</p>
+      </button>
+      <button type="button" class="stat-card stat-card--rejected is-clickable" data-drill="card-rejected">
+        <p class="stat-card-label">Rejected <span class="stat-card-hint">view →</span></p>
         <p class="stat-card-value">${s.rejected}</p>
-      </div>
-      <div class="stat-card">
-        <p class="stat-card-label">QC Users Involved</p>
+      </button>
+      <button type="button" class="stat-card is-clickable" data-drill="card-other" ${s.other === 0 ? 'disabled style="cursor:default"' : ''}>
+        <p class="stat-card-label">QC Users Involved ${s.other > 0 ? '<span class="stat-card-hint">view other →</span>' : ''}</p>
         <p class="stat-card-value">${report.byQcUser.length}</p>
-        ${s.other > 0 ? `<p class="stat-card-sub">${s.other} other status</p>` : ""}
-      </div>
+        ${otherHint}
+      </button>
       <div class="stamp is-${rateBucket(s.approvalRate)}">
         <span class="stamp-eyebrow">Approval</span>
         <span class="stamp-value">${formatRate(s.approvalRate)}</span>
@@ -337,7 +453,7 @@ function render() {
         <h2 class="section-title">QC User Breakdown</h2>
         <button class="copy-btn" id="copy-btn">Copy report for management</button>
       </div>
-      ${renderTable(report.byQcUser, "QC User")}
+      ${renderBreakdownTable(report.byQcUser, "QC User", "qc-user")}
     </section>
 
     <section class="section">
@@ -345,41 +461,179 @@ function render() {
         <h2 class="section-title">QA Reviewer Breakdown</h2>
         <span class="section-note">Who on the QA team reviewed these videos</span>
       </div>
-      ${renderTable(report.byReviewer, "QA Reviewer")}
+      ${renderBreakdownTable(report.byReviewer, "QA Reviewer", "qa-reviewer")}
     </section>
   `;
 
   document.getElementById("content").innerHTML = html;
-
-  document.querySelectorAll(".tab-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      STATE.activeTab = btn.dataset.tab;
-      render();
-    });
-  });
-
-  document.getElementById("copy-btn").addEventListener("click", async (e) => {
-    const text = buildReportText(report);
-    try {
-      await navigator.clipboard.writeText(text);
-      const original = e.target.textContent;
-      e.target.textContent = "Copied ✓";
-      setTimeout(() => { e.target.textContent = original; }, 1800);
-    } catch (err) {
-      alert("Couldn't copy automatically. Select the report text manually.");
-    }
-  });
 }
 
+// ============================================================================
+// DRILL-DOWN MODAL
+// ============================================================================
+function openDrilldown({ title, subtitle, rows }) {
+  document.getElementById("modal-eyebrow").textContent = STATE.reports[STATE.activeTab].label;
+  document.getElementById("modal-title").textContent = title;
+  document.getElementById("modal-meta").textContent = subtitle;
+
+  const body = document.getElementById("modal-body");
+  if (rows.length === 0) {
+    body.innerHTML = `<div class="modal-empty">No videos match this selection.</div>`;
+  } else {
+    const trs = rows.map(({ row, ts }) => {
+      const status = classify(row.qa_status);
+      const statusLabel = norm(row.qa_status) || "—";
+      const reason = norm(row.qa_reason);
+      const videoUrl = norm(row.video_url);
+      const videoCell = videoUrl
+        ? `<a class="video-link" href="${escapeHtml(videoUrl)}" target="_blank" rel="noopener noreferrer">Open ↗</a>`
+        : `<span class="cell-empty">—</span>`;
+      return `<tr>
+        <td>${escapeHtml(formatISTShort(ts))}</td>
+        <td>${escapeHtml(norm(row.enterprise_name) || "—")}</td>
+        <td>${escapeHtml(norm(row.vin_name) || "—")}</td>
+        <td>${escapeHtml(qcUserKey(row))}</td>
+        <td>${escapeHtml(qaReviewerKey(row))}</td>
+        <td><span class="status-tag status-tag--${status}">${escapeHtml(statusLabel)}</span></td>
+        <td class="cell-reason">${reason ? escapeHtml(reason) : '<span class="cell-empty">—</span>'}</td>
+        <td>${videoCell}</td>
+      </tr>`;
+    }).join("");
+    body.innerHTML = `<table class="ledger">
+      <thead><tr>
+        <th>Reviewed at (IST)</th>
+        <th>Enterprise</th>
+        <th>VIN</th>
+        <th>QC User</th>
+        <th>QA Reviewer</th>
+        <th>Status</th>
+        <th>Reason</th>
+        <th>Video</th>
+      </tr></thead>
+      <tbody>${trs}</tbody>
+    </table>`;
+  }
+
+  document.getElementById("modal").classList.remove("is-hidden");
+  document.body.classList.add("is-modal-open");
+}
+
+function closeDrilldown() {
+  document.getElementById("modal").classList.add("is-hidden");
+  document.body.classList.remove("is-modal-open");
+}
+
+function handleDrill(drill, dataset) {
+  const report = STATE.reports[STATE.activeTab];
+  const inWindow = report.inWindow;
+  const periodLabel = report.label;
+
+  // Top-level KPI cards
+  if (drill === "card-reviewed") {
+    return openDrilldown({
+      title: "All reviewed videos",
+      subtitle: `${periodLabel} · ${inWindow.length} videos`,
+      rows: inWindow,
+    });
+  }
+  if (drill === "card-approved") {
+    const rows = filterInWindow(inWindow, { status: "approved" });
+    return openDrilldown({ title: "Approved videos", subtitle: `${periodLabel} · ${rows.length} videos`, rows });
+  }
+  if (drill === "card-rejected") {
+    const rows = filterInWindow(inWindow, { status: "rejected" });
+    return openDrilldown({ title: "Rejected videos", subtitle: `${periodLabel} · ${rows.length} videos`, rows });
+  }
+  if (drill === "card-other") {
+    const rows = filterInWindow(inWindow, { status: "other" });
+    return openDrilldown({ title: "Videos with other status", subtitle: `${periodLabel} · ${rows.length} videos`, rows });
+  }
+
+  // Table cells
+  const groupType = dataset.groupType;
+  const key = dataset.key;
+  const groupField = groupType === "qc-user" ? "qcUser" : "qaReviewer";
+  const groupLabel = groupType === "qc-user" ? "QC User" : "QA Reviewer";
+
+  if (drill === "group-reviewed") {
+    const rows = filterInWindow(inWindow, { [groupField]: key });
+    return openDrilldown({ title: "Reviewed videos", subtitle: `${periodLabel} · ${groupLabel}: ${key} · ${rows.length} videos`, rows });
+  }
+  if (drill === "group-approved") {
+    const rows = filterInWindow(inWindow, { [groupField]: key, status: "approved" });
+    return openDrilldown({ title: "Approved videos", subtitle: `${periodLabel} · ${groupLabel}: ${key} · ${rows.length} videos`, rows });
+  }
+  if (drill === "group-rejected") {
+    const rows = filterInWindow(inWindow, { [groupField]: key, status: "rejected" });
+    return openDrilldown({ title: "Rejected videos", subtitle: `${periodLabel} · ${groupLabel}: ${key} · ${rows.length} videos`, rows });
+  }
+}
+
+// ============================================================================
+// EVENT WIRING (delegated, so it survives re-renders)
+// ============================================================================
+document.addEventListener("click", (e) => {
+  const modalCloser = e.target.closest("[data-modal-close]");
+  if (modalCloser) { closeDrilldown(); return; }
+
+  const tabBtn = e.target.closest("[data-tab]");
+  if (tabBtn) {
+    STATE.activeTab = tabBtn.dataset.tab;
+    render();
+    return;
+  }
+
+  if (e.target.closest("#copy-btn")) {
+    const report = STATE.reports?.[STATE.activeTab];
+    if (!report) return;
+    const text = buildReportText(report);
+    const btn = document.getElementById("copy-btn");
+    navigator.clipboard.writeText(text).then(
+      () => {
+        const original = btn.textContent;
+        btn.textContent = "Copied ✓";
+        setTimeout(() => { btn.textContent = original; }, 1800);
+      },
+      () => { alert("Couldn't copy automatically. Select the report text manually."); }
+    );
+    return;
+  }
+
+  if (e.target.closest("#refresh-btn")) {
+    loadDashboard({ isRefresh: true });
+    return;
+  }
+
+  const drillEl = e.target.closest("[data-drill]");
+  if (drillEl && !drillEl.disabled) {
+    handleDrill(drillEl.dataset.drill, drillEl.dataset);
+    return;
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !document.getElementById("modal").classList.contains("is-hidden")) {
+    closeDrilldown();
+  }
+});
+
+// ============================================================================
+// LOAD / REFRESH
+// ============================================================================
 function showError(message) {
   document.getElementById("content").innerHTML =
     `<div class="state-banner state-banner--error">Couldn't load the dashboard: ${escapeHtml(message)}</div>`;
 }
 
-// ============================================================================
-// LOAD
-// ============================================================================
-async function loadDashboard() {
+async function loadDashboard({ isRefresh = false } = {}) {
+  const refreshBtn = document.getElementById("refresh-btn");
+  const refreshLabel = refreshBtn.querySelector(".refresh-label");
+  const originalLabel = refreshLabel.textContent;
+
+  refreshBtn.disabled = true;
+  refreshBtn.classList.add("is-spinning");
+  refreshLabel.textContent = isRefresh ? "Refreshing…" : "Loading…";
+
   try {
     const res = await fetch(CSV_URL, { cache: "no-store" });
     if (!res.ok) throw new Error(`Sheet fetch failed: ${res.status} ${res.statusText}`);
@@ -403,7 +657,11 @@ async function loadDashboard() {
     render();
   } catch (err) {
     console.error(err);
-    showError(err.message + " — if this is a CORS error, see the note at the bottom of the README.");
+    showError(err.message + (err.message.toLowerCase().includes("fetch") ? " — if this is a CORS error, see the note at the bottom of the README." : ""));
+  } finally {
+    refreshBtn.disabled = false;
+    refreshBtn.classList.remove("is-spinning");
+    refreshLabel.textContent = "Refresh";
   }
 }
 
