@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>QA Daily Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  :root {
+    --bg: #f6f5f1;
+    --surface: #ffffff;
+    --ink: #1c2321;
+    --ink-soft: #5b6461;
+    --line: #dedad0;
+    --teal: #0f5257;
+    --green: #1f7a45;
+    --green-soft: #e4f3e9;
+    --red: #b23a2e;
+    --red-soft: #fbe9e7;
+    --amber: #a5730e;
+    --amber-soft: #f6ecd9;
+    --font-display: "Space Grotesk", "Segoe UI", sans-serif;
+    --font-body: "Inter", "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", "Courier New", monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { padding: 0; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
+  *:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+  .app-shell { max-width: 1180px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  .masthead { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;
+    border-bottom: 2px solid var(--ink); padding-bottom: 18px; margin-bottom: 28px; }
+  .masthead-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--teal); margin: 0 0 6px; }
+  .masthead-title { font-family: var(--font-display); font-size: 32px; font-weight: 600; letter-spacing: -.01em; margin: 0; }
+  .masthead-meta { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-soft); text-align: right; line-height: 1.6; }
+
+  .tab-bar { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+  .tab-btn { appearance: none; background: transparent; border: 1px solid transparent; border-bottom: none; padding: 10px 18px;
+    font-size: 14px; font-weight: 500; color: var(--ink-soft); cursor: pointer; border-radius: 6px 6px 0 0; position: relative; top: 1px; font-family: inherit; }
+  .tab-btn:hover { color: var(--ink); background: var(--surface); }
+  .tab-btn.is-active { color: var(--ink); background: var(--surface); border-color: var(--line); border-bottom: 1px solid var(--surface); font-weight: 600; }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 14px; align-items: stretch; margin-bottom: 36px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between; min-height: 96px; }
+  .stat-card-label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 10px; }
+  .stat-card-value { font-family: var(--font-mono); font-size: 30px; font-weight: 600; line-height: 1; }
+  .stat-card--approved .stat-card-value { color: var(--green); }
+  .stat-card--rejected .stat-card-value { color: var(--red); }
+  .stat-card-sub { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
+
+  .stamp { --stamp-color: var(--green); width: 108px; height: 108px; border-radius: 50%; border: 3px double var(--stamp-color);
+    color: var(--stamp-color); display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transform: rotate(-8deg); background: color-mix(in srgb, var(--stamp-color) 6%, transparent); flex-shrink: 0; }
+  .stamp.is-low { --stamp-color: var(--red); }
+  .stamp.is-mid { --stamp-color: var(--amber); }
+  .stamp-eyebrow { font-family: var(--font-mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
+  .stamp-value { font-family: var(--font-mono); font-size: 26px; font-weight: 700; line-height: 1.1; }
+  .stamp-caption { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: .1em; text-transform: uppercase; }
+
+  .section { margin-bottom: 36px; }
+  .section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+  .section-title { font-family: var(--font-display); font-size: 18px; font-weight: 600; margin: 0; }
+  .section-note { font-size: 12.5px; color: var(--ink-soft); }
+
+  .table-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow-x: auto; }
+  table.ledger { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.ledger th { text-align: left; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft);
+    font-weight: 600; padding: 12px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  table.ledger td { padding: 11px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  table.ledger tbody tr:last-child td { border-bottom: none; }
+  table.ledger tbody tr:hover { background: var(--bg); }
+  .num { font-family: var(--font-mono); text-align: right; }
+
+  .rate-pill { display: inline-block; font-family: var(--font-mono); font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
+  .rate-pill--high { background: var(--green-soft); color: var(--green); }
+  .rate-pill--mid { background: var(--amber-soft); color: var(--amber); }
+  .rate-pill--low { background: var(--red-soft); color: var(--red); }
+  .rate-pill--none { background: var(--bg); color: var(--ink-soft); }
+
+  .copy-btn { appearance: none; border: 1px solid var(--teal); background: var(--teal); color: #fff; font-size: 13px; font-weight: 600;
+    padding: 8px 16px; border-radius: 7px; cursor: pointer; font-family: inherit; }
+  .copy-btn:hover { background: #0c4247; }
+  .copy-btn:active { transform: translateY(1px); }
+
+  .state-banner { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 32px; text-align: center; color: var(--ink-soft); font-size: 14px; }
+  .state-banner--error { border-color: var(--red); color: var(--red); background: var(--red-soft); }
+  .muted-row td { color: var(--ink-soft); }
+
+  @media (max-width: 860px) {
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    .stamp { grid-column: span 2; justify-self: center; }
+  }
+  @media (max-width: 520px) {
+    .summary-grid { grid-template-columns: 1fr; }
+    .stamp { grid-column: span 1; }
+    .masthead { flex-direction: column; align-items: flex-start; }
+    .masthead-meta { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell" id="app">
+  <header class="masthead">
+    <div>
+      <p class="masthead-eyebrow">Video QC · QA Review</p>
+      <h1 class="masthead-title">QA Daily Report</h1>
+    </div>
+    <div class="masthead-meta" id="masthead-meta">Loading…</div>
+  </header>
+  <div id="content">
+    <div class="state-banner">Loading QA data…</div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// CONFIG — the published CSV export of the Delivered_videos sheet.
+// ============================================================================
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQviNsOTXM2LlIs5ipLiil6Nox9r6BH2o-7-WtgLbTKDIltzZlHXxnlWYm7KkJLfr1JsDM69wyevuT/pub?output=csv";
+
+// ============================================================================
+// DATE RANGES — IST wall-clock (fixed UTC+5:30, no DST), based on qa_timestamp.
+// ============================================================================
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
+function istWallClockParts(nowUtc) {
+  const shifted = new Date(nowUtc.getTime() + IST_OFFSET_MS);
+  return {
+    y: shifted.getUTCFullYear(),
+    m: shifted.getUTCMonth(),
+    d: shifted.getUTCDate(),
+    weekday: (shifted.getUTCDay() + 6) % 7, // 0 = Monday
+  };
+}
+
+function istMidnightUtc(y, m, d) {
+  return new Date(Date.UTC(y, m, d, 0, 0, 0, 0) - IST_OFFSET_MS);
+}
+
+function addDaysUtc(date, days) {
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
+function buildDateRanges(nowUtc) {
+  const { y, m, d, weekday } = istWallClockParts(nowUtc);
+  const todayStart = istMidnightUtc(y, m, d);
+  const todayEnd = addDaysUtc(todayStart, 1);
+  const yesterdayStart = addDaysUtc(todayStart, -1);
+  const weekStart = addDaysUtc(todayStart, -weekday);
+  const monthStart = istMidnightUtc(y, m, 1);
+
+  return {
+    today: { start: todayStart, end: todayEnd, label: "Today" },
+    yesterday: { start: yesterdayStart, end: todayStart, label: "Yesterday (Day-1)" },
+    thisWeek: { start: weekStart, end: nowUtc, label: "This Week" },
+    thisMonth: { start: monthStart, end: nowUtc, label: "This Month" },
+    overall: { start: null, end: null, label: "Overall" },
+  };
+}
+
+// ============================================================================
+// AGGREGATION
+// ============================================================================
+function parseTimestamp(value) {
+  if (!value || typeof value !== "string" || !value.trim()) return null;
+  const dt = new Date(value.trim());
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+function norm(value) { return (value || "").toString().trim(); }
+
+function reviewedRows(rows) {
+  return rows.map((r) => ({ row: r, ts: parseTimestamp(r.qa_timestamp) })).filter((x) => x.ts !== null);
+}
+
+function inRange(ts, start, end) {
+  if (start === null || end === null) return true;
+  return ts >= start && ts < end;
+}
+
+function classify(qaStatus) {
+  const s = norm(qaStatus).toLowerCase();
+  if (s === "approved") return "approved";
+  if (s === "rejected") return "rejected";
+  return "other";
+}
+
+function summarize(rowsWithTs) {
+  let approved = 0, rejected = 0, other = 0;
+  for (const { row } of rowsWithTs) {
+    const bucket = classify(row.qa_status);
+    if (bucket === "approved") approved++;
+    else if (bucket === "rejected") rejected++;
+    else other++;
+  }
+  const reviewed = rowsWithTs.length;
+  const decided = approved + rejected;
+  const approvalRate = decided > 0 ? (approved / decided) * 100 : null;
+  return { reviewed, approved, rejected, other, approvalRate };
+}
+
+function groupByField(rowsWithTs, fieldGetter, fallbackLabel) {
+  const map = new Map();
+  for (const entry of rowsWithTs) {
+    const key = norm(fieldGetter(entry.row)) || fallbackLabel;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(entry);
+  }
+  const groups = [];
+  for (const [key, entries] of map.entries()) groups.push({ key, ...summarize(entries) });
+  groups.sort((a, b) => b.reviewed - a.reviewed);
+  return groups;
+}
+
+function buildRangeReport(allRows, range) {
+  const reviewed = reviewedRows(allRows);
+  const inWindow = reviewed.filter((x) => inRange(x.ts, range.start, range.end));
+  const summary = summarize(inWindow);
+  const byQcUser = groupByField(inWindow, (row) => row.qc_user_email_id || row.qc_user_id, "(unknown QC user)");
+  const byReviewer = groupByField(inWindow, (row) => row.qa_reviewer, "(unknown reviewer)");
+  return { label: range.label, summary, byQcUser, byReviewer };
+}
+
+// ============================================================================
+// FORMATTING HELPERS
+// ============================================================================
+function formatIST(date) {
+  return new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata", day: "2-digit", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit", hour12: true,
+  }).format(date) + " IST";
+}
+
+function rateBucket(rate) {
+  if (rate === null || rate === undefined) return "none";
+  if (rate >= 90) return "high";
+  if (rate >= 75) return "mid";
+  return "low";
+}
+
+function formatRate(rate) { return (rate === null || rate === undefined) ? "—" : rate.toFixed(1) + "%"; }
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function buildReportText(report) {
+  const { label, summary, byQcUser } = report;
+  const lines = [];
+  lines.push(`QA Daily Report — ${label}`);
+  lines.push(`Reviewed: ${summary.reviewed} | Approved: ${summary.approved} (${formatRate(summary.approvalRate)}) | Rejected: ${summary.rejected}` +
+    (summary.other ? ` | Other: ${summary.other}` : ""));
+  lines.push("");
+  lines.push("QC User Breakdown:");
+  if (byQcUser.length === 0) {
+    lines.push("  (no videos reviewed in this period)");
+  } else {
+    for (const g of byQcUser) {
+      lines.push(`  - ${g.key}: ${g.reviewed} reviewed, ${g.approved} approved, ${g.rejected} rejected (${formatRate(g.approvalRate)})`);
+    }
+  }
+  return lines.join("\n");
+}
+
+// ============================================================================
+// RENDERING
+// ============================================================================
+const TAB_ORDER = ["today", "yesterday", "thisWeek", "thisMonth", "overall"];
+let STATE = { reports: null, activeTab: "today", generatedAt: null, totalRows: 0 };
+
+function renderTable(groups, headLabel) {
+  if (groups.length === 0) {
+    return `<div class="table-wrap"><table class="ledger"><thead><tr>
+      <th>${headLabel}</th><th class="num">Reviewed</th><th class="num">Approved</th><th class="num">Rejected</th><th class="num">Approval Rate</th>
+      </tr></thead><tbody><tr class="muted-row"><td colspan="5">No videos reviewed in this period.</td></tr></tbody></table></div>`;
+  }
+  const rows = groups.map((g) => `<tr>
+    <td>${escapeHtml(g.key)}</td>
+    <td class="num">${g.reviewed}</td>
+    <td class="num">${g.approved}</td>
+    <td class="num">${g.rejected}</td>
+    <td class="num"><span class="rate-pill rate-pill--${rateBucket(g.approvalRate)}">${formatRate(g.approvalRate)}</span></td>
+  </tr>`).join("");
+  return `<div class="table-wrap"><table class="ledger"><thead><tr>
+    <th>${headLabel}</th><th class="num">Reviewed</th><th class="num">Approved</th><th class="num">Rejected</th><th class="num">Approval Rate</th>
+    </tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+
+function render() {
+  document.getElementById("masthead-meta").innerHTML =
+    `Generated ${formatIST(STATE.generatedAt)}<br>${STATE.totalRows.toLocaleString()} rows in source sheet`;
+
+  const report = STATE.reports[STATE.activeTab];
+  const s = report.summary;
+
+  const tabs = TAB_ORDER.map((key) =>
+    `<button class="tab-btn ${key === STATE.activeTab ? "is-active" : ""}" data-tab="${key}">${STATE.reports[key].label}</button>`
+  ).join("");
+
+  const html = `
+    <nav class="tab-bar">${tabs}</nav>
+
+    <section class="summary-grid">
+      <div class="stat-card">
+        <p class="stat-card-label">Reviewed</p>
+        <p class="stat-card-value">${s.reviewed}</p>
+      </div>
+      <div class="stat-card stat-card--approved">
+        <p class="stat-card-label">Approved</p>
+        <p class="stat-card-value">${s.approved}</p>
+      </div>
+      <div class="stat-card stat-card--rejected">
+        <p class="stat-card-label">Rejected</p>
+        <p class="stat-card-value">${s.rejected}</p>
+      </div>
+      <div class="stat-card">
+        <p class="stat-card-label">QC Users Involved</p>
+        <p class="stat-card-value">${report.byQcUser.length}</p>
+        ${s.other > 0 ? `<p class="stat-card-sub">${s.other} other status</p>` : ""}
+      </div>
+      <div class="stamp is-${rateBucket(s.approvalRate)}">
+        <span class="stamp-eyebrow">Approval</span>
+        <span class="stamp-value">${formatRate(s.approvalRate)}</span>
+        <span class="stamp-caption">Rate</span>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2 class="section-title">QC User Breakdown</h2>
+        <button class="copy-btn" id="copy-btn">Copy report for management</button>
+      </div>
+      ${renderTable(report.byQcUser, "QC User")}
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2 class="section-title">QA Reviewer Breakdown</h2>
+        <span class="section-note">Who on the QA team reviewed these videos</span>
+      </div>
+      ${renderTable(report.byReviewer, "QA Reviewer")}
+    </section>
+  `;
+
+  document.getElementById("content").innerHTML = html;
+
+  document.querySelectorAll(".tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      STATE.activeTab = btn.dataset.tab;
+      render();
+    });
+  });
+
+  document.getElementById("copy-btn").addEventListener("click", async (e) => {
+    const text = buildReportText(report);
+    try {
+      await navigator.clipboard.writeText(text);
+      const original = e.target.textContent;
+      e.target.textContent = "Copied ✓";
+      setTimeout(() => { e.target.textContent = original; }, 1800);
+    } catch (err) {
+      alert("Couldn't copy automatically. Select the report text manually.");
+    }
+  });
+}
+
+function showError(message) {
+  document.getElementById("content").innerHTML =
+    `<div class="state-banner state-banner--error">Couldn't load the dashboard: ${escapeHtml(message)}</div>`;
+}
+
+// ============================================================================
+// LOAD
+// ============================================================================
+async function loadDashboard() {
+  try {
+    const res = await fetch(CSV_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Sheet fetch failed: ${res.status} ${res.statusText}`);
+    const csvText = await res.text();
+    const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+    const rows = parsed.data;
+
+    const now = new Date();
+    const ranges = buildDateRanges(now);
+
+    STATE.reports = {
+      today: buildRangeReport(rows, ranges.today),
+      yesterday: buildRangeReport(rows, ranges.yesterday),
+      thisWeek: buildRangeReport(rows, ranges.thisWeek),
+      thisMonth: buildRangeReport(rows, ranges.thisMonth),
+      overall: buildRangeReport(rows, ranges.overall),
+    };
+    STATE.generatedAt = now;
+    STATE.totalRows = rows.length;
+
+    render();
+  } catch (err) {
+    console.error(err);
+    showError(err.message + " — if this is a CORS error, see the note at the bottom of the README.");
+  }
+}
+
+loadDashboard();
+</script>
+</body>
+</html>
