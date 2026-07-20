@@ -8,56 +8,144 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script>
+  // Apply theme early to avoid a flash of light content for users who prefer dark.
+  (function () {
+    try {
+      const stored = localStorage.getItem("qa-dashboard-theme");
+      const wantsDark = stored === "dark" || (!stored && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      if (wantsDark) document.documentElement.setAttribute("data-theme", "dark");
+    } catch (_) {}
+  })();
+</script>
 <style>
   :root {
     --bg: #f6f5f1;
     --surface: #ffffff;
+    --surface-alt: #fbfaf6;
     --ink: #1c2321;
     --ink-soft: #5b6461;
     --line: #dedad0;
     --teal: #0f5257;
+    --teal-soft: #e4eeee;
     --green: #1f7a45;
     --green-soft: #e4f3e9;
     --red: #b23a2e;
     --red-soft: #fbe9e7;
     --amber: #a5730e;
     --amber-soft: #f6ecd9;
+    --modal-backdrop: rgba(28, 35, 33, 0.42);
+    --shadow-panel: 0 24px 60px rgba(28, 35, 33, 0.22);
+    --shadow-popover: 0 12px 32px rgba(28, 35, 33, 0.14);
+
     --font-display: "Space Grotesk", "Segoe UI", sans-serif;
     --font-body: "Inter", "Segoe UI", sans-serif;
     --font-mono: "IBM Plex Mono", "Courier New", monospace;
   }
+
+  :root[data-theme="dark"] {
+    --bg: #17191c;
+    --surface: #21252a;
+    --surface-alt: #262a30;
+    --ink: #ece8dc;
+    --ink-soft: #8b9297;
+    --line: #33383e;
+    --teal: #5ec1c1;
+    --teal-soft: #1a2f31;
+    --green: #6bce8b;
+    --green-soft: #1c2f24;
+    --red: #ff7d6c;
+    --red-soft: #391f1c;
+    --amber: #d9a94a;
+    --amber-soft: #322818;
+    --modal-backdrop: rgba(0, 0, 0, 0.6);
+    --shadow-panel: 0 24px 60px rgba(0, 0, 0, 0.6);
+    --shadow-popover: 0 12px 32px rgba(0, 0, 0, 0.5);
+  }
+
   * { box-sizing: border-box; }
   html, body { padding: 0; margin: 0; }
-  body { background: var(--bg); color: var(--ink); font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
   *:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
   .app-shell { max-width: 1180px; margin: 0 auto; padding: 32px 24px 80px; }
 
   /* ---------- Masthead ---------- */
-  .masthead { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px;
+  .masthead { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;
     border-bottom: 2px solid var(--ink); padding-bottom: 18px; margin-bottom: 28px; }
   .masthead-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--teal); margin: 0 0 6px; }
-  .masthead-titlerow { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
   .masthead-title { font-family: var(--font-display); font-size: 32px; font-weight: 600; letter-spacing: -.01em; margin: 0; }
+  .masthead-right { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
   .masthead-meta { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-soft); text-align: right; line-height: 1.6; }
+  .masthead-actions { display: flex; gap: 8px; align-items: center; }
 
-  .refresh-btn { appearance: none; background: var(--surface); border: 1px solid var(--line); color: var(--ink);
+  .icon-btn { appearance: none; background: var(--surface); border: 1px solid var(--line); color: var(--ink);
     font-family: inherit; font-size: 13px; font-weight: 500; padding: 7px 14px 7px 12px; border-radius: 999px; cursor: pointer;
-    display: inline-flex; align-items: center; gap: 6px; }
-  .refresh-btn:hover { border-color: var(--teal); color: var(--teal); }
-  .refresh-btn:active { transform: translateY(1px); }
-  .refresh-btn[disabled] { opacity: .55; cursor: wait; }
-  .refresh-btn .refresh-icon { display: inline-block; font-size: 15px; line-height: 1; }
-  .refresh-btn.is-spinning .refresh-icon { animation: spin 900ms linear infinite; }
+    display: inline-flex; align-items: center; gap: 6px; transition: border-color .12s, color .12s; }
+  .icon-btn:hover { border-color: var(--teal); color: var(--teal); }
+  .icon-btn:active { transform: translateY(1px); }
+  .icon-btn[disabled] { opacity: .55; cursor: wait; }
+  .icon-btn svg { display: block; }
+  .icon-btn.is-icon-only { padding: 7px 10px; }
+  .icon-btn.is-spinning svg { animation: spin 900ms linear infinite; transform-origin: center; }
   @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 
-  /* ---------- Tabs ---------- */
-  .tab-bar { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
-  .tab-btn { appearance: none; background: transparent; border: 1px solid transparent; border-bottom: none; padding: 10px 18px;
-    font-size: 14px; font-weight: 500; color: var(--ink-soft); cursor: pointer; border-radius: 6px 6px 0 0; position: relative; top: 1px; font-family: inherit; }
-  .tab-btn:hover { color: var(--ink); background: var(--surface); }
-  .tab-btn.is-active { color: var(--ink); background: var(--surface); border-color: var(--line); border-bottom: 1px solid var(--surface); font-weight: 600; }
+  /* ---------- Filter row (date range) ---------- */
+  .filter-row { display: flex; align-items: flex-end; gap: 20px; margin-bottom: 28px; flex-wrap: wrap; }
+  .filter-field { display: flex; flex-direction: column; gap: 6px; }
+  .filter-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
+  .daterange-wrap { position: relative; }
+  .daterange-trigger { appearance: none; background: var(--surface); border: 1px solid var(--line); color: var(--ink);
+    font-family: inherit; font-size: 14px; font-weight: 500; padding: 10px 14px; border-radius: 8px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 10px; min-width: 260px; text-align: left; justify-content: space-between; }
+  .daterange-trigger:hover, .daterange-trigger.is-open { border-color: var(--teal); }
+  .daterange-trigger .trigger-content { display: inline-flex; align-items: center; gap: 10px; }
+  .daterange-trigger .chevron { transition: transform .15s ease; color: var(--ink-soft); }
+  .daterange-trigger.is-open .chevron { transform: rotate(180deg); }
+
+  .daterange-panel { position: absolute; top: calc(100% + 6px); left: 0; z-index: 60;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: var(--shadow-popover); display: flex; overflow: hidden; }
+  .daterange-panel.is-hidden { display: none; }
+
+  .daterange-quicklist { padding: 12px 0; border-right: 1px solid var(--line); min-width: 180px; background: var(--surface-alt); }
+  .quicklist-heading { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); padding: 10px 18px 4px; }
+  .preset-btn { display: block; width: 100%; text-align: left; padding: 7px 18px; border: none; background: transparent;
+    color: var(--ink); font: inherit; font-size: 13.5px; cursor: pointer; border-left: 3px solid transparent; }
+  .preset-btn:hover { background: var(--bg); }
+  .preset-btn.is-active { background: color-mix(in srgb, var(--teal) 10%, transparent); border-left-color: var(--teal); color: var(--teal); font-weight: 600; }
+
+  .daterange-calendar { padding: 16px 20px 12px; min-width: 340px; }
+  .cal-caption { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 10px; }
+  .cal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .cal-title { font-family: var(--font-display); font-weight: 600; font-size: 15px; }
+  .cal-nav { appearance: none; background: transparent; border: 1px solid var(--line); border-radius: 6px; width: 28px; height: 28px;
+    cursor: pointer; color: var(--ink); display: inline-flex; align-items: center; justify-content: center; }
+  .cal-nav:hover { border-color: var(--ink); }
+
+  .cal-weekdays, .cal-days { display: grid; grid-template-columns: repeat(7, 40px); }
+  .cal-weekdays > div { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-soft); text-align: center; padding: 6px 0; letter-spacing: .08em; }
+  .cal-day { appearance: none; background: transparent; border: none; padding: 8px 0; font: inherit; font-family: var(--font-mono);
+    font-size: 13px; color: var(--ink); cursor: pointer; position: relative; height: 34px; }
+  .cal-day.is-adjacent { color: var(--ink-soft); opacity: .45; }
+  .cal-day:hover:not(.is-range-start):not(.is-range-end) { background: var(--bg); }
+  .cal-day.is-today::after { content: ''; position: absolute; bottom: 4px; left: 50%; width: 3px; height: 3px; border-radius: 50%; background: var(--teal); transform: translateX(-50%); }
+  .cal-day.is-in-range { background: color-mix(in srgb, var(--teal) 18%, transparent); }
+  .cal-day.is-range-start, .cal-day.is-range-end { background: var(--teal); color: #fff; font-weight: 600; }
+  .cal-day.is-range-start.is-today::after, .cal-day.is-range-end.is-today::after { background: #fff; }
+  .cal-day.is-range-start { border-radius: 6px 0 0 6px; }
+  .cal-day.is-range-end { border-radius: 0 6px 6px 0; }
+  .cal-day.is-range-single { border-radius: 6px; }
+
+  .cal-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); gap: 12px; }
+  .cal-range-label { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); }
+  .cal-clear-btn { appearance: none; background: transparent; border: none; color: var(--teal); font: inherit; font-size: 12.5px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+  .cal-clear-btn:hover { background: var(--teal-soft); }
 
   /* ---------- Summary ---------- */
   .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 14px; align-items: stretch; margin-bottom: 36px; }
@@ -67,7 +155,9 @@
   .stat-card.is-clickable { cursor: pointer; transition: border-color .12s ease, transform .12s ease; }
   .stat-card.is-clickable:hover { border-color: var(--teal); transform: translateY(-1px); }
   .stat-card.is-clickable:active { transform: translateY(0); }
-  .stat-card-label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center; }
+  .stat-card[disabled] { cursor: default; }
+  .stat-card[disabled]:hover { border-color: var(--line); transform: none; }
+  .stat-card-label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .stat-card-hint { font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft); opacity: .7; letter-spacing: .05em; }
   .stat-card-value { font-family: var(--font-mono); font-size: 30px; font-weight: 600; line-height: 1; }
   .stat-card--approved .stat-card-value { color: var(--green); }
@@ -76,7 +166,7 @@
 
   .stamp { --stamp-color: var(--green); width: 108px; height: 108px; border-radius: 50%; border: 3px double var(--stamp-color);
     color: var(--stamp-color); display: flex; flex-direction: column; align-items: center; justify-content: center;
-    transform: rotate(-8deg); background: color-mix(in srgb, var(--stamp-color) 6%, transparent); flex-shrink: 0; }
+    transform: rotate(-8deg); background: color-mix(in srgb, var(--stamp-color) 8%, transparent); flex-shrink: 0; }
   .stamp.is-low { --stamp-color: var(--red); }
   .stamp.is-mid { --stamp-color: var(--amber); }
   .stamp-eyebrow { font-family: var(--font-mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; }
@@ -97,15 +187,14 @@
   table.ledger tbody tr:last-child td { border-bottom: none; }
   table.ledger tbody tr:hover { background: var(--bg); }
 
-  /* Alignment fix: element+class selector needed to beat `table.ledger th` specificity */
-  table.ledger th.num,
-  table.ledger td.num { text-align: right; font-family: var(--font-mono); }
+  /* Alignment fix (element+class beats `table.ledger th`) */
+  table.ledger th.num, table.ledger td.num { text-align: right; font-family: var(--font-mono); }
 
   .num-btn { appearance: none; background: transparent; border: none; padding: 2px 6px; margin: -2px -6px;
     font: inherit; color: var(--teal); cursor: pointer; border-radius: 4px; font-weight: 500;
     text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px;
     transition: background-color .12s, text-decoration-color .12s; }
-  .num-btn:hover { background: var(--teal-soft, #e4eeee); text-decoration-color: var(--teal); }
+  .num-btn:hover { background: var(--teal-soft); text-decoration-color: var(--teal); }
   .num-zero { color: var(--ink-soft); }
 
   .rate-pill { display: inline-block; font-family: var(--font-mono); font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
@@ -116,7 +205,7 @@
 
   .copy-btn { appearance: none; border: 1px solid var(--teal); background: var(--teal); color: #fff; font-size: 13px; font-weight: 600;
     padding: 8px 16px; border-radius: 7px; cursor: pointer; font-family: inherit; }
-  .copy-btn:hover { background: #0c4247; }
+  .copy-btn:hover { filter: brightness(.9); }
   .copy-btn:active { transform: translateY(1px); }
 
   .state-banner { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 32px; text-align: center; color: var(--ink-soft); font-size: 14px; }
@@ -126,21 +215,24 @@
   /* ---------- Modal (drill-down) ---------- */
   .modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 32px 20px; }
   .modal.is-hidden { display: none; }
-  .modal-backdrop { position: absolute; inset: 0; background: rgba(28, 35, 33, 0.42); backdrop-filter: blur(2px); }
+  .modal-backdrop { position: absolute; inset: 0; background: var(--modal-backdrop); backdrop-filter: blur(2px); }
   .modal-panel { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
-    box-shadow: 0 24px 60px rgba(28, 35, 33, 0.22); width: min(1180px, 100%); max-height: calc(100vh - 64px);
+    box-shadow: var(--shadow-panel); width: min(1180px, 100%); max-height: calc(100vh - 64px);
     display: flex; flex-direction: column; }
   .modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
-    padding: 20px 24px 16px; border-bottom: 1px solid var(--line); }
+    padding: 20px 28px 16px; border-bottom: 1px solid var(--line); }
   .modal-title-block { min-width: 0; }
   .modal-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--teal); margin: 0 0 6px; }
   .modal-title { font-family: var(--font-display); font-size: 20px; font-weight: 600; margin: 0 0 4px; }
-  .modal-meta { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-soft); }
+  .modal-meta { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-soft); margin: 0; }
   .modal-close { appearance: none; background: transparent; border: 1px solid var(--line); border-radius: 8px;
-    width: 34px; height: 34px; font-size: 20px; line-height: 1; cursor: pointer; color: var(--ink-soft); }
+    width: 34px; height: 34px; font-size: 20px; line-height: 1; cursor: pointer; color: var(--ink-soft); flex-shrink: 0; }
   .modal-close:hover { border-color: var(--ink); color: var(--ink); }
-  .modal-body { padding: 0; overflow: auto; }
+  .modal-body { padding: 0 28px 24px; overflow: auto; }
   .modal-body table.ledger { font-size: 13px; }
+  .modal-body table.ledger th, .modal-body table.ledger td { padding: 13px 18px; }
+  .modal-body table.ledger th:first-child, .modal-body table.ledger td:first-child { padding-left: 4px; }
+  .modal-body table.ledger th:last-child, .modal-body table.ledger td:last-child { padding-right: 4px; }
   .modal-body table.ledger th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
   .status-tag { display: inline-block; font-family: var(--font-mono); font-size: 11px; font-weight: 600;
     padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: .04em; }
@@ -157,14 +249,21 @@
   @media (max-width: 860px) {
     .summary-grid { grid-template-columns: repeat(2, 1fr); }
     .stamp { grid-column: span 2; justify-self: center; }
+    .daterange-panel { flex-direction: column; }
+    .daterange-quicklist { border-right: none; border-bottom: 1px solid var(--line); }
   }
   @media (max-width: 520px) {
     .summary-grid { grid-template-columns: 1fr; }
     .stamp { grid-column: span 1; }
     .masthead { flex-direction: column; align-items: flex-start; }
+    .masthead-right { align-items: flex-start; }
     .masthead-meta { text-align: left; }
     .modal { padding: 12px; }
     .modal-panel { max-height: calc(100vh - 24px); }
+    .modal-head { padding: 16px 18px 12px; }
+    .modal-body { padding: 0 18px 18px; }
+    .daterange-trigger { min-width: 0; width: 100%; }
+    .cal-weekdays, .cal-days { grid-template-columns: repeat(7, 1fr); }
   }
 </style>
 </head>
@@ -174,16 +273,38 @@
   <header class="masthead">
     <div>
       <p class="masthead-eyebrow">Video QC · QA Review</p>
-      <div class="masthead-titlerow">
-        <h1 class="masthead-title">QA Daily Report</h1>
-        <button class="refresh-btn" id="refresh-btn" type="button" title="Re-fetch the sheet">
-          <span class="refresh-icon" aria-hidden="true">↻</span>
+      <h1 class="masthead-title">QA Daily Report</h1>
+    </div>
+    <div class="masthead-right">
+      <div class="masthead-meta" id="masthead-meta">Loading…</div>
+      <div class="masthead-actions">
+        <button class="icon-btn" id="refresh-btn" type="button" title="Re-fetch the sheet">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15A9 9 0 0 1 5.64 18.36L1 14"/></svg>
           <span class="refresh-label">Refresh</span>
+        </button>
+        <button class="icon-btn is-icon-only" id="theme-btn" type="button" title="Toggle theme" aria-label="Toggle theme">
+          <span id="theme-icon"></span>
         </button>
       </div>
     </div>
-    <div class="masthead-meta" id="masthead-meta">Loading…</div>
   </header>
+
+  <div class="filter-row">
+    <div class="filter-field">
+      <label class="filter-label" for="daterange-trigger">Date range</label>
+      <div class="daterange-wrap">
+        <button class="daterange-trigger" id="daterange-trigger" type="button" aria-haspopup="dialog" aria-expanded="false">
+          <span class="trigger-content">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span id="daterange-label">Today</span>
+          </span>
+          <svg class="chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="daterange-panel is-hidden" id="daterange-panel" role="dialog" aria-label="Choose date range"></div>
+      </div>
+    </div>
+  </div>
+
   <div id="content">
     <div class="state-banner">Loading QA data…</div>
   </div>
@@ -206,12 +327,12 @@
 
 <script>
 // ============================================================================
-// CONFIG — the published CSV export of the Delivered_videos sheet.
+// CONFIG
 // ============================================================================
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQviNsOTXM2LlIs5ipLiil6Nox9r6BH2o-7-WtgLbTKDIltzZlHXxnlWYm7KkJLfr1JsDM69wyevuT/pub?output=csv";
 
 // ============================================================================
-// DATE RANGES — IST wall-clock (fixed UTC+5:30, no DST), based on qa_timestamp.
+// DATE UTILITIES — IST wall-clock (fixed UTC+5:30, no DST), based on qa_timestamp.
 // ============================================================================
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
@@ -233,20 +354,35 @@ function addDaysUtc(date, days) {
   return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
-function buildDateRanges(nowUtc) {
+// ---------- Preset ranges ----------
+const PRESETS = [
+  { key: "allTime", group: "Quick select", label: "All time" },
+  { key: "today", group: "Quick select", label: "Today" },
+  { key: "yesterday", group: "Quick select", label: "Yesterday" },
+  { key: "thisWeek", group: "Quick select", label: "This week" },
+  { key: "lastWeek", group: "Quick select", label: "Last week" },
+  { key: "thisMonth", group: "Months", label: "This month" },
+  { key: "lastMonth", group: "Months", label: "Last month" },
+  { key: "last30", group: "Months", label: "Last 30 days" },
+  { key: "last90", group: "Months", label: "Last 90 days" },
+];
+
+function computePresetRange(key, nowUtc) {
   const { y, m, d, weekday } = istWallClockParts(nowUtc);
   const todayStart = istMidnightUtc(y, m, d);
-  const todayEnd = addDaysUtc(todayStart, 1);
-  const yesterdayStart = addDaysUtc(todayStart, -1);
-  const weekStart = addDaysUtc(todayStart, -weekday);
-  const monthStart = istMidnightUtc(y, m, 1);
-  return {
-    today: { start: todayStart, end: todayEnd, label: "Today" },
-    yesterday: { start: yesterdayStart, end: todayStart, label: "Yesterday (Day-1)" },
-    thisWeek: { start: weekStart, end: nowUtc, label: "This Week" },
-    thisMonth: { start: monthStart, end: nowUtc, label: "This Month" },
-    overall: { start: null, end: null, label: "Overall" },
-  };
+  const tomorrowStart = addDaysUtc(todayStart, 1);
+  switch (key) {
+    case "allTime": return { start: null, end: null };
+    case "today": return { start: todayStart, end: tomorrowStart };
+    case "yesterday": return { start: addDaysUtc(todayStart, -1), end: todayStart };
+    case "thisWeek": return { start: addDaysUtc(todayStart, -weekday), end: nowUtc };
+    case "lastWeek": return { start: addDaysUtc(todayStart, -weekday - 7), end: addDaysUtc(todayStart, -weekday) };
+    case "thisMonth": return { start: istMidnightUtc(y, m, 1), end: nowUtc };
+    case "lastMonth": return { start: istMidnightUtc(y, m - 1, 1), end: istMidnightUtc(y, m, 1) };
+    case "last30": return { start: addDaysUtc(todayStart, -30), end: nowUtc };
+    case "last90": return { start: addDaysUtc(todayStart, -90), end: nowUtc };
+  }
+  return { start: null, end: null };
 }
 
 // ============================================================================
@@ -306,16 +442,14 @@ function groupByField(rowsWithTs, fieldGetter, fallbackLabel) {
   return groups;
 }
 
-function buildRangeReport(allRows, range) {
-  const reviewed = reviewedRows(allRows);
-  const inWindow = reviewed.filter((x) => inRange(x.ts, range.start, range.end));
+function buildReport(reviewedRowsWithTs, range) {
+  const inWindow = reviewedRowsWithTs.filter((x) => inRange(x.ts, range.start, range.end));
   const summary = summarize(inWindow);
   const byQcUser = groupByField(inWindow, qcUserKey, "(unknown QC user)");
   const byReviewer = groupByField(inWindow, qaReviewerKey, "(unknown reviewer)");
   return { label: range.label, summary, byQcUser, byReviewer, inWindow };
 }
 
-// Filters the in-window rows for drill-downs.
 function filterInWindow(inWindow, { status, qcUser, qaReviewer } = {}) {
   return inWindow.filter(({ row }) => {
     if (status && classify(row.qa_status) !== status) return false;
@@ -328,18 +462,23 @@ function filterInWindow(inWindow, { status, qcUser, qaReviewer } = {}) {
 // ============================================================================
 // FORMATTING HELPERS
 // ============================================================================
+const IST_TZ = "Asia/Kolkata";
+
 function formatIST(date) {
   return new Intl.DateTimeFormat("en-IN", {
-    timeZone: "Asia/Kolkata", day: "2-digit", month: "short", year: "numeric",
+    timeZone: IST_TZ, day: "2-digit", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit", hour12: true,
   }).format(date) + " IST";
 }
 
 function formatISTShort(date) {
   return new Intl.DateTimeFormat("en-IN", {
-    timeZone: "Asia/Kolkata", day: "2-digit", month: "short",
-    hour: "2-digit", minute: "2-digit", hour12: true,
+    timeZone: IST_TZ, day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: true,
   }).format(date);
+}
+
+function formatDayIST(date) {
+  return new Intl.DateTimeFormat("en-IN", { timeZone: IST_TZ, day: "2-digit", month: "short", year: "numeric" }).format(date);
 }
 
 function rateBucket(rate) {
@@ -374,22 +513,252 @@ function buildReportText(report) {
 }
 
 // ============================================================================
-// RENDERING
+// STATE
 // ============================================================================
-const TAB_ORDER = ["today", "yesterday", "thisWeek", "thisMonth", "overall"];
-let STATE = { reports: null, activeTab: "today", generatedAt: null, totalRows: 0 };
+let STATE = {
+  reviewedRows: [],
+  generatedAt: null,
+  totalRows: 0,
+  activeRange: { key: "today", label: "Today", start: null, end: null },
+  picker: {
+    open: false,
+    // Calendar month currently displayed as {y, m} in local (UTC-based) coordinates.
+    viewMonth: null,
+    // Pending custom selection (IST midnight-anchored UTC Dates).
+    pickStart: null,
+    pickEnd: null,
+  },
+};
 
-// Renders a number cell that's either a clickable button (>0) or plain zero.
-function numCell(count, drill) {
-  if (count === 0) {
-    return `<td class="num"><span class="num-zero">0</span></td>`;
+// ============================================================================
+// THEME
+// ============================================================================
+function currentTheme() {
+  return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+}
+
+function setTheme(theme) {
+  if (theme === "dark") document.documentElement.setAttribute("data-theme", "dark");
+  else document.documentElement.removeAttribute("data-theme");
+  try { localStorage.setItem("qa-dashboard-theme", theme); } catch (_) {}
+  renderThemeIcon();
+}
+
+function toggleTheme() { setTheme(currentTheme() === "dark" ? "light" : "dark"); }
+
+const ICON_SUN = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
+const ICON_MOON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+
+function renderThemeIcon() {
+  const el = document.getElementById("theme-icon");
+  if (!el) return;
+  el.innerHTML = currentTheme() === "dark" ? ICON_SUN : ICON_MOON;
+}
+
+// ============================================================================
+// DATE RANGE PICKER
+// ============================================================================
+function openPicker() {
+  const range = STATE.activeRange;
+  const now = new Date();
+  // Choose the calendar month to display: use current range's start month if custom, else today.
+  const anchor = range.key === "custom" && range.start ? range.start : now;
+  const parts = istWallClockParts(anchor);
+  STATE.picker.viewMonth = { y: parts.y, m: parts.m };
+  // Prefill pending selection if we're on a custom range so the highlight shows what's active.
+  if (range.key === "custom" && range.start && range.end) {
+    STATE.picker.pickStart = range.start;
+    // range.end is exclusive (midnight of day after last day) — pick display end is the last included day.
+    STATE.picker.pickEnd = addDaysUtc(range.end, -1);
+  } else {
+    STATE.picker.pickStart = null;
+    STATE.picker.pickEnd = null;
   }
+  STATE.picker.open = true;
+  renderPicker();
+  document.getElementById("daterange-trigger").classList.add("is-open");
+  document.getElementById("daterange-trigger").setAttribute("aria-expanded", "true");
+  document.getElementById("daterange-panel").classList.remove("is-hidden");
+}
+
+function closePicker() {
+  STATE.picker.open = false;
+  document.getElementById("daterange-trigger").classList.remove("is-open");
+  document.getElementById("daterange-trigger").setAttribute("aria-expanded", "false");
+  document.getElementById("daterange-panel").classList.add("is-hidden");
+}
+
+function togglePicker() { STATE.picker.open ? closePicker() : openPicker(); }
+
+function applyPreset(key) {
+  const preset = PRESETS.find((p) => p.key === key);
+  if (!preset) return;
+  const range = computePresetRange(key, new Date());
+  STATE.activeRange = { key, label: preset.label, start: range.start, end: range.end };
+  closePicker();
+  render();
+}
+
+// Records a click on a calendar day. `cellDate` is a UTC Date representing IST midnight
+// of that calendar day.
+function pickDay(cellDate) {
+  const p = STATE.picker;
+  if (!p.pickStart || (p.pickStart && p.pickEnd)) {
+    // Fresh selection.
+    p.pickStart = cellDate;
+    p.pickEnd = null;
+    renderPicker();
+    return;
+  }
+  // p.pickStart is set, p.pickEnd is null → this click sets the end.
+  let start = p.pickStart, end = cellDate;
+  if (end < start) { const t = start; start = end; end = t; }
+  p.pickStart = start;
+  p.pickEnd = end;
+  applyCustomRange();
+}
+
+function applyCustomRange() {
+  const { pickStart, pickEnd } = STATE.picker;
+  if (!pickStart || !pickEnd) return;
+  // pickEnd is midnight of the last included day — range end is midnight of the day after (exclusive).
+  const endExclusive = addDaysUtc(pickEnd, 1);
+  const label = `${formatDayIST(pickStart)} → ${formatDayIST(pickEnd)}`;
+  STATE.activeRange = { key: "custom", label, start: pickStart, end: endExclusive };
+  closePicker();
+  render();
+}
+
+function navigateCalendar(deltaMonths) {
+  const vm = STATE.picker.viewMonth;
+  const nd = new Date(Date.UTC(vm.y, vm.m + deltaMonths, 1));
+  STATE.picker.viewMonth = { y: nd.getUTCFullYear(), m: nd.getUTCMonth() };
+  renderPicker();
+}
+
+function clearCustom() {
+  STATE.picker.pickStart = null;
+  STATE.picker.pickEnd = null;
+  renderPicker();
+}
+
+function renderPicker() {
+  const p = STATE.picker;
+  if (!p.viewMonth) return;
+  const { y, m } = p.viewMonth;
+
+  // Build 42 cells (6 rows × 7 days), Sunday-first.
+  const firstOfMonth = new Date(Date.UTC(y, m, 1));
+  const firstWeekday = firstOfMonth.getUTCDay(); // 0=Sun
+  const daysInMonth = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  const monthName = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(firstOfMonth);
+
+  const todayParts = istWallClockParts(new Date());
+
+  const cells = [];
+  for (let i = 0; i < 42; i++) {
+    const dayOffset = i - firstWeekday;
+    const cellUtc = new Date(Date.UTC(y, m, 1 + dayOffset));
+    const cy = cellUtc.getUTCFullYear();
+    const cm = cellUtc.getUTCMonth();
+    const cd = cellUtc.getUTCDate();
+    const midnight = istMidnightUtc(cy, cm, cd);
+    const isAdjacent = cm !== m;
+    const isToday = cy === todayParts.y && cm === todayParts.m && cd === todayParts.d;
+
+    let inRangeClass = "";
+    let rangeStart = false, rangeEnd = false;
+    if (p.pickStart && p.pickEnd) {
+      if (midnight.getTime() === p.pickStart.getTime()) rangeStart = true;
+      if (midnight.getTime() === p.pickEnd.getTime()) rangeEnd = true;
+      if (midnight > p.pickStart && midnight < p.pickEnd) inRangeClass = " is-in-range";
+    } else if (p.pickStart) {
+      if (midnight.getTime() === p.pickStart.getTime()) rangeStart = true;
+    }
+
+    const singleDay = rangeStart && rangeEnd && p.pickStart && p.pickEnd && p.pickStart.getTime() === p.pickEnd.getTime();
+
+    cells.push({
+      y: cy, m: cm, d: cd,
+      midnight,
+      adjacent: isAdjacent,
+      today: isToday,
+      rangeStart, rangeEnd,
+      inRangeClass,
+      singleDay,
+    });
+  }
+
+  const weekdays = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+  const weekdaysHtml = weekdays.map((w) => `<div>${w}</div>`).join("");
+  const daysHtml = cells.map((c) => {
+    const classes = ["cal-day"];
+    if (c.adjacent) classes.push("is-adjacent");
+    if (c.today) classes.push("is-today");
+    if (c.rangeStart) classes.push("is-range-start");
+    if (c.rangeEnd) classes.push("is-range-end");
+    if (c.singleDay) classes.push("is-range-single");
+    if (c.inRangeClass) classes.push("is-in-range");
+    return `<button type="button" class="${classes.join(" ")}" data-cal-day="${c.midnight.toISOString()}">${c.d}</button>`;
+  }).join("");
+
+  // Preset list
+  const activeKey = STATE.activeRange.key;
+  const grouped = new Map();
+  for (const preset of PRESETS) {
+    if (!grouped.has(preset.group)) grouped.set(preset.group, []);
+    grouped.get(preset.group).push(preset);
+  }
+  let presetsHtml = "";
+  for (const [group, items] of grouped.entries()) {
+    presetsHtml += `<div class="quicklist-heading">${escapeHtml(group)}</div>`;
+    presetsHtml += items.map((it) =>
+      `<button type="button" class="preset-btn ${it.key === activeKey ? "is-active" : ""}" data-preset="${it.key}">${escapeHtml(it.label)}</button>`
+    ).join("");
+  }
+  presetsHtml += `<div class="quicklist-heading">Custom</div>`;
+  presetsHtml += `<button type="button" class="preset-btn ${activeKey === "custom" ? "is-active" : ""}" data-preset-custom>Custom range</button>`;
+
+  const rangeLabel = (p.pickStart && p.pickEnd)
+    ? `${formatDayIST(p.pickStart)} → ${formatDayIST(p.pickEnd)}`
+    : (p.pickStart ? `${formatDayIST(p.pickStart)} → …` : "Click a date, then click end");
+
+  document.getElementById("daterange-panel").innerHTML = `
+    <div class="daterange-quicklist">${presetsHtml}</div>
+    <div class="daterange-calendar">
+      <p class="cal-caption">Custom date range</p>
+      <div class="cal-header">
+        <button type="button" class="cal-nav" data-cal-nav="-1" aria-label="Previous month">‹</button>
+        <span class="cal-title">${escapeHtml(monthName)}</span>
+        <button type="button" class="cal-nav" data-cal-nav="1" aria-label="Next month">›</button>
+      </div>
+      <div class="cal-weekdays">${weekdaysHtml}</div>
+      <div class="cal-days">${daysHtml}</div>
+      <div class="cal-footer">
+        <span class="cal-range-label">${escapeHtml(rangeLabel)}</span>
+        ${p.pickStart ? '<button type="button" class="cal-clear-btn" data-cal-clear>Clear</button>' : ""}
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================================
+// TRIGGER LABEL
+// ============================================================================
+function updateTriggerLabel() {
+  document.getElementById("daterange-label").textContent = STATE.activeRange.label;
+}
+
+// ============================================================================
+// RENDERING (main content)
+// ============================================================================
+function numCell(count, drill) {
+  if (count === 0) return `<td class="num"><span class="num-zero">0</span></td>`;
   const attrs = Object.entries(drill).map(([k, v]) => `data-${k}="${escapeHtml(v)}"`).join(" ");
   return `<td class="num"><button class="num-btn" ${attrs}>${count}</button></td>`;
 }
 
 function renderBreakdownTable(groups, headLabel, keyDrillAttr) {
-  // keyDrillAttr: which data attribute the row-key filter should use ("qc-user" or "qa-reviewer")
   if (groups.length === 0) {
     return `<div class="table-wrap"><table class="ledger"><thead><tr>
       <th>${headLabel}</th><th class="num">Reviewed</th><th class="num">Approved</th><th class="num">Rejected</th><th class="num">Approval Rate</th>
@@ -407,22 +776,24 @@ function renderBreakdownTable(groups, headLabel, keyDrillAttr) {
     </tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
-function render() {
-  document.getElementById("masthead-meta").innerHTML =
-    `Generated ${formatIST(STATE.generatedAt)}<br>${STATE.totalRows.toLocaleString()} rows in source sheet`;
+let CURRENT_REPORT = null;
 
-  const report = STATE.reports[STATE.activeTab];
+function render() {
+  updateTriggerLabel();
+
+  const metaEl = document.getElementById("masthead-meta");
+  if (STATE.generatedAt) {
+    metaEl.innerHTML = `Generated ${formatIST(STATE.generatedAt)}<br>${STATE.totalRows.toLocaleString()} rows in source sheet`;
+  }
+
+  const report = buildReport(STATE.reviewedRows, STATE.activeRange);
+  CURRENT_REPORT = report;
   const s = report.summary;
 
-  const tabs = TAB_ORDER.map((key) =>
-    `<button class="tab-btn ${key === STATE.activeTab ? "is-active" : ""}" data-tab="${key}">${STATE.reports[key].label}</button>`
-  ).join("");
-
   const otherHint = s.other > 0 ? `<p class="stat-card-sub">${s.other} other status</p>` : "";
+  const otherDisabled = s.other === 0 ? "disabled" : "";
 
   const html = `
-    <nav class="tab-bar">${tabs}</nav>
-
     <section class="summary-grid">
       <button type="button" class="stat-card is-clickable" data-drill="card-reviewed">
         <p class="stat-card-label">Reviewed <span class="stat-card-hint">view →</span></p>
@@ -436,7 +807,7 @@ function render() {
         <p class="stat-card-label">Rejected <span class="stat-card-hint">view →</span></p>
         <p class="stat-card-value">${s.rejected}</p>
       </button>
-      <button type="button" class="stat-card is-clickable" data-drill="card-other" ${s.other === 0 ? 'disabled style="cursor:default"' : ''}>
+      <button type="button" class="stat-card ${s.other > 0 ? "is-clickable" : ""}" data-drill="card-other" ${otherDisabled}>
         <p class="stat-card-label">QC Users Involved ${s.other > 0 ? '<span class="stat-card-hint">view other →</span>' : ''}</p>
         <p class="stat-card-value">${report.byQcUser.length}</p>
         ${otherHint}
@@ -472,7 +843,7 @@ function render() {
 // DRILL-DOWN MODAL
 // ============================================================================
 function openDrilldown({ title, subtitle, rows }) {
-  document.getElementById("modal-eyebrow").textContent = STATE.reports[STATE.activeTab].label;
+  document.getElementById("modal-eyebrow").textContent = STATE.activeRange.label;
   document.getElementById("modal-title").textContent = title;
   document.getElementById("modal-meta").textContent = subtitle;
 
@@ -524,17 +895,13 @@ function closeDrilldown() {
 }
 
 function handleDrill(drill, dataset) {
-  const report = STATE.reports[STATE.activeTab];
+  const report = CURRENT_REPORT;
+  if (!report) return;
   const inWindow = report.inWindow;
   const periodLabel = report.label;
 
-  // Top-level KPI cards
   if (drill === "card-reviewed") {
-    return openDrilldown({
-      title: "All reviewed videos",
-      subtitle: `${periodLabel} · ${inWindow.length} videos`,
-      rows: inWindow,
-    });
+    return openDrilldown({ title: "All reviewed videos", subtitle: `${periodLabel} · ${inWindow.length} videos`, rows: inWindow });
   }
   if (drill === "card-approved") {
     const rows = filterInWindow(inWindow, { status: "approved" });
@@ -549,7 +916,6 @@ function handleDrill(drill, dataset) {
     return openDrilldown({ title: "Videos with other status", subtitle: `${periodLabel} · ${rows.length} videos`, rows });
   }
 
-  // Table cells
   const groupType = dataset.groupType;
   const key = dataset.key;
   const groupField = groupType === "qc-user" ? "qcUser" : "qaReviewer";
@@ -570,52 +936,59 @@ function handleDrill(drill, dataset) {
 }
 
 // ============================================================================
-// EVENT WIRING (delegated, so it survives re-renders)
+// EVENT WIRING (delegated so it survives re-renders)
 // ============================================================================
 document.addEventListener("click", (e) => {
-  const modalCloser = e.target.closest("[data-modal-close]");
-  if (modalCloser) { closeDrilldown(); return; }
+  if (e.target.closest("[data-modal-close]")) { closeDrilldown(); return; }
 
-  const tabBtn = e.target.closest("[data-tab]");
-  if (tabBtn) {
-    STATE.activeTab = tabBtn.dataset.tab;
-    render();
+  if (e.target.closest("#refresh-btn")) { loadDashboard({ isRefresh: true }); return; }
+  if (e.target.closest("#theme-btn")) { toggleTheme(); return; }
+  if (e.target.closest("#copy-btn")) { handleCopy(); return; }
+
+  // Date picker interactions
+  if (e.target.closest("#daterange-trigger")) { togglePicker(); return; }
+
+  const presetBtn = e.target.closest("[data-preset]");
+  if (presetBtn) { applyPreset(presetBtn.dataset.preset); return; }
+  if (e.target.closest("[data-preset-custom]")) {
+    // "Custom range" heading — just make sure calendar is visible; don't close.
     return;
   }
+  const navBtn = e.target.closest("[data-cal-nav]");
+  if (navBtn) { navigateCalendar(parseInt(navBtn.dataset.calNav, 10)); return; }
+  const dayBtn = e.target.closest("[data-cal-day]");
+  if (dayBtn) { pickDay(new Date(dayBtn.dataset.calDay)); return; }
+  if (e.target.closest("[data-cal-clear]")) { clearCustom(); return; }
 
-  if (e.target.closest("#copy-btn")) {
-    const report = STATE.reports?.[STATE.activeTab];
-    if (!report) return;
-    const text = buildReportText(report);
-    const btn = document.getElementById("copy-btn");
-    navigator.clipboard.writeText(text).then(
-      () => {
-        const original = btn.textContent;
-        btn.textContent = "Copied ✓";
-        setTimeout(() => { btn.textContent = original; }, 1800);
-      },
-      () => { alert("Couldn't copy automatically. Select the report text manually."); }
-    );
-    return;
-  }
-
-  if (e.target.closest("#refresh-btn")) {
-    loadDashboard({ isRefresh: true });
-    return;
+  // Close picker when clicking outside it and outside trigger
+  if (STATE.picker.open && !e.target.closest("#daterange-panel") && !e.target.closest("#daterange-trigger")) {
+    closePicker();
   }
 
   const drillEl = e.target.closest("[data-drill]");
-  if (drillEl && !drillEl.disabled) {
-    handleDrill(drillEl.dataset.drill, drillEl.dataset);
-    return;
-  }
+  if (drillEl && !drillEl.disabled) { handleDrill(drillEl.dataset.drill, drillEl.dataset); return; }
 });
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !document.getElementById("modal").classList.contains("is-hidden")) {
-    closeDrilldown();
-  }
+  if (e.key !== "Escape") return;
+  if (!document.getElementById("modal").classList.contains("is-hidden")) { closeDrilldown(); return; }
+  if (STATE.picker.open) { closePicker(); return; }
 });
+
+function handleCopy() {
+  const report = CURRENT_REPORT;
+  if (!report) return;
+  const text = buildReportText(report);
+  const btn = document.getElementById("copy-btn");
+  navigator.clipboard.writeText(text).then(
+    () => {
+      const original = btn.textContent;
+      btn.textContent = "Copied ✓";
+      setTimeout(() => { btn.textContent = original; }, 1800);
+    },
+    () => { alert("Couldn't copy automatically. Select the report text manually."); }
+  );
+}
 
 // ============================================================================
 // LOAD / REFRESH
@@ -628,8 +1001,6 @@ function showError(message) {
 async function loadDashboard({ isRefresh = false } = {}) {
   const refreshBtn = document.getElementById("refresh-btn");
   const refreshLabel = refreshBtn.querySelector(".refresh-label");
-  const originalLabel = refreshLabel.textContent;
-
   refreshBtn.disabled = true;
   refreshBtn.classList.add("is-spinning");
   refreshLabel.textContent = isRefresh ? "Refreshing…" : "Loading…";
@@ -641,23 +1012,24 @@ async function loadDashboard({ isRefresh = false } = {}) {
     const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
     const rows = parsed.data;
 
-    const now = new Date();
-    const ranges = buildDateRanges(now);
-
-    STATE.reports = {
-      today: buildRangeReport(rows, ranges.today),
-      yesterday: buildRangeReport(rows, ranges.yesterday),
-      thisWeek: buildRangeReport(rows, ranges.thisWeek),
-      thisMonth: buildRangeReport(rows, ranges.thisMonth),
-      overall: buildRangeReport(rows, ranges.overall),
-    };
-    STATE.generatedAt = now;
+    STATE.reviewedRows = reviewedRows(rows);
+    STATE.generatedAt = new Date();
     STATE.totalRows = rows.length;
+
+    // On first load, resolve the initial preset's range against "now".
+    if (!isRefresh && STATE.activeRange.start === null && STATE.activeRange.end === null && STATE.activeRange.key !== "allTime") {
+      const range = computePresetRange(STATE.activeRange.key, new Date());
+      STATE.activeRange = { ...STATE.activeRange, start: range.start, end: range.end };
+    } else if (isRefresh && STATE.activeRange.key !== "custom") {
+      // On refresh, re-resolve preset ranges so "today" etc. reflect the new "now".
+      const range = computePresetRange(STATE.activeRange.key, new Date());
+      STATE.activeRange = { ...STATE.activeRange, start: range.start, end: range.end };
+    }
 
     render();
   } catch (err) {
     console.error(err);
-    showError(err.message + (err.message.toLowerCase().includes("fetch") ? " — if this is a CORS error, see the note at the bottom of the README." : ""));
+    showError(err.message + (err.message.toLowerCase().includes("fetch") ? " — if this is a CORS error, try re-publishing the sheet or hosting behind a small proxy." : ""));
   } finally {
     refreshBtn.disabled = false;
     refreshBtn.classList.remove("is-spinning");
@@ -665,6 +1037,10 @@ async function loadDashboard({ isRefresh = false } = {}) {
   }
 }
 
+// ============================================================================
+// INIT
+// ============================================================================
+renderThemeIcon();
 loadDashboard();
 </script>
 </body>
