@@ -9,7 +9,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script>
-  // Apply theme early to avoid a flash of light content for users who prefer dark.
   (function () {
     try {
       const stored = localStorage.getItem("qa-dashboard-theme");
@@ -20,23 +19,33 @@
 </script>
 <style>
   :root {
-    --bg: #f6f5f1;
-    --surface: #ffffff;
-    --surface-alt: #fbfaf6;
+    /* Light theme: pure white background, neutral light-gray cards */
+    --bg: #ffffff;
+    --surface: #f4f5f7;
+    --surface-alt: #e7e9ee;
     --ink: #1c2321;
-    --ink-soft: #5b6461;
-    --line: #dedad0;
+    --ink-soft: #5e6764;
+    --line: #d5d8de;
+    --line-strong: #b0b5bb;
     --teal: #0f5257;
-    --teal-soft: #e4eeee;
+    --teal-soft: #d9ebeb;
     --green: #1f7a45;
-    --green-soft: #e4f3e9;
+    --green-soft: #dcf0e3;
     --red: #b23a2e;
-    --red-soft: #fbe9e7;
+    --red-soft: #f7e2df;
     --amber: #a5730e;
-    --amber-soft: #f6ecd9;
-    --modal-backdrop: rgba(28, 35, 33, 0.42);
+    --amber-soft: #f2e3c4;
+    --modal-backdrop: rgba(28, 35, 33, 0.45);
     --shadow-panel: 0 24px 60px rgba(28, 35, 33, 0.22);
     --shadow-popover: 0 12px 32px rgba(28, 35, 33, 0.14);
+    --row-hover: color-mix(in srgb, var(--teal) 5%, transparent);
+
+    --chart-1: #0f5257;
+    --chart-2: #b23a2e;
+    --chart-3: #a5730e;
+    --chart-4: #2e4a7a;
+    --chart-5: #6e57a3;
+    --chart-6: #3a7a2e;
 
     --font-display: "Space Grotesk", "Segoe UI", sans-serif;
     --font-body: "Inter", "Segoe UI", sans-serif;
@@ -50,6 +59,7 @@
     --ink: #ece8dc;
     --ink-soft: #8b9297;
     --line: #33383e;
+    --line-strong: #4a5058;
     --teal: #5ec1c1;
     --teal-soft: #1a2f31;
     --green: #6bce8b;
@@ -61,6 +71,14 @@
     --modal-backdrop: rgba(0, 0, 0, 0.6);
     --shadow-panel: 0 24px 60px rgba(0, 0, 0, 0.6);
     --shadow-popover: 0 12px 32px rgba(0, 0, 0, 0.5);
+    --row-hover: color-mix(in srgb, var(--teal) 12%, transparent);
+
+    --chart-1: #5ec1c1;
+    --chart-2: #ff7d6c;
+    --chart-3: #d9a94a;
+    --chart-4: #7d9ee0;
+    --chart-5: #b39ee0;
+    --chart-6: #7fc85e;
   }
 
   * { box-sizing: border-box; }
@@ -95,7 +113,7 @@
   .icon-btn.is-spinning svg { animation: spin 900ms linear infinite; transform-origin: center; }
   @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 
-  /* ---------- Filter row (date range) ---------- */
+  /* ---------- Filter row ---------- */
   .filter-row { display: flex; align-items: flex-end; gap: 20px; margin-bottom: 28px; flex-wrap: wrap; }
   .filter-field { display: flex; flex-direction: column; gap: 6px; }
   .filter-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
@@ -147,7 +165,7 @@
   .cal-clear-btn { appearance: none; background: transparent; border: none; color: var(--teal); font: inherit; font-size: 12.5px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
   .cal-clear-btn:hover { background: var(--teal-soft); }
 
-  /* ---------- Summary ---------- */
+  /* ---------- Summary cards ---------- */
   .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 14px; align-items: stretch; margin-bottom: 36px; }
   .stat-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px;
     display: flex; flex-direction: column; justify-content: space-between; min-height: 96px; text-align: left;
@@ -160,9 +178,10 @@
   .stat-card-label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .stat-card-hint { font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft); opacity: .7; letter-spacing: .05em; }
   .stat-card-value { font-family: var(--font-mono); font-size: 30px; font-weight: 600; line-height: 1; }
-  .stat-card--approved .stat-card-value { color: var(--green); }
-  .stat-card--rejected .stat-card-value { color: var(--red); }
-  .stat-card-sub { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
+  .stat-card--approved .stat-card-value, .stat-card--approved .stat-card-rate { color: var(--green); }
+  .stat-card--rejected .stat-card-value, .stat-card--rejected .stat-card-rate { color: var(--red); }
+  .stat-card-rate { font-family: var(--font-mono); font-size: 14px; font-weight: 600; margin-top: 6px; }
+  .stat-card-sub { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
 
   .stamp { --stamp-color: var(--green); width: 108px; height: 108px; border-radius: 50%; border: 3px double var(--stamp-color);
     color: var(--stamp-color); display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -185,10 +204,15 @@
     font-weight: 600; padding: 12px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
   table.ledger td { padding: 11px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
   table.ledger tbody tr:last-child td { border-bottom: none; }
-  table.ledger tbody tr:hover { background: var(--bg); }
+  table.ledger tbody tr:hover td { background: var(--row-hover); }
 
-  /* Alignment fix (element+class beats `table.ledger th`) */
   table.ledger th.num, table.ledger td.num { text-align: right; font-family: var(--font-mono); }
+
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--ink); }
+  th.sortable .sort-arrow { display: inline-block; margin-left: 4px; font-size: 10px; color: var(--ink-soft); opacity: .4; }
+  th.sortable.is-sorted .sort-arrow { opacity: 1; color: var(--teal); font-weight: 700; }
+  th.sortable.is-sorted { color: var(--ink); }
 
   .num-btn { appearance: none; background: transparent; border: none; padding: 2px 6px; margin: -2px -6px;
     font: inherit; color: var(--teal); cursor: pointer; border-radius: 4px; font-weight: 500;
@@ -201,7 +225,10 @@
   .rate-pill--high { background: var(--green-soft); color: var(--green); }
   .rate-pill--mid { background: var(--amber-soft); color: var(--amber); }
   .rate-pill--low { background: var(--red-soft); color: var(--red); }
-  .rate-pill--none { background: var(--bg); color: var(--ink-soft); }
+  .rate-pill--none { background: var(--surface-alt); color: var(--ink-soft); }
+  .rate-pill--rejection-high { background: var(--red-soft); color: var(--red); }
+  .rate-pill--rejection-mid { background: var(--amber-soft); color: var(--amber); }
+  .rate-pill--rejection-low { background: var(--green-soft); color: var(--green); }
 
   .copy-btn { appearance: none; border: 1px solid var(--teal); background: var(--teal); color: #fff; font-size: 13px; font-weight: 600;
     padding: 8px 16px; border-radius: 7px; cursor: pointer; font-family: inherit; }
@@ -211,6 +238,16 @@
   .state-banner { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 32px; text-align: center; color: var(--ink-soft); font-size: 14px; }
   .state-banner--error { border-color: var(--red); color: var(--red); background: var(--red-soft); }
   .muted-row td { color: var(--ink-soft); }
+
+  /* ---------- Trend chart ---------- */
+  .chart-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px 12px; }
+  .chart-empty { text-align: center; color: var(--ink-soft); font-size: 13.5px; padding: 40px 20px; }
+  .chart-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 10px; font-size: 12.5px; }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  .legend-total { font-family: var(--font-mono); color: var(--ink-soft); font-size: 11.5px; }
+  .chart-svg-wrap { width: 100%; overflow-x: auto; }
+  .trend-chart { width: 100%; height: auto; display: block; }
 
   /* ---------- Modal (drill-down) ---------- */
   .modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 32px 20px; }
@@ -330,31 +367,26 @@
 // CONFIG
 // ============================================================================
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQviNsOTXM2LlIs5ipLiil6Nox9r6BH2o-7-WtgLbTKDIltzZlHXxnlWYm7KkJLfr1JsDM69wyevuT/pub?output=csv";
-
-// ============================================================================
-// DATE UTILITIES — IST wall-clock (fixed UTC+5:30, no DST), based on qa_timestamp.
-// ============================================================================
+const IST_TZ = "Asia/Kolkata";
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+const TREND_WINDOW_DAYS = 15;
+const TREND_TOP_USERS = 6;
 
+// ============================================================================
+// DATE UTILITIES
+// ============================================================================
 function istWallClockParts(nowUtc) {
   const shifted = new Date(nowUtc.getTime() + IST_OFFSET_MS);
   return {
     y: shifted.getUTCFullYear(),
     m: shifted.getUTCMonth(),
     d: shifted.getUTCDate(),
-    weekday: (shifted.getUTCDay() + 6) % 7, // 0 = Monday
+    weekday: (shifted.getUTCDay() + 6) % 7,
   };
 }
+function istMidnightUtc(y, m, d) { return new Date(Date.UTC(y, m, d, 0, 0, 0, 0) - IST_OFFSET_MS); }
+function addDaysUtc(date, days) { return new Date(date.getTime() + days * 24 * 60 * 60 * 1000); }
 
-function istMidnightUtc(y, m, d) {
-  return new Date(Date.UTC(y, m, d, 0, 0, 0, 0) - IST_OFFSET_MS);
-}
-
-function addDaysUtc(date, days) {
-  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
-}
-
-// ---------- Preset ranges ----------
 const PRESETS = [
   { key: "allTime", group: "Quick select", label: "All time" },
   { key: "today", group: "Quick select", label: "Today" },
@@ -393,25 +425,20 @@ function parseTimestamp(value) {
   const dt = new Date(value.trim());
   return Number.isNaN(dt.getTime()) ? null : dt;
 }
-
 function norm(value) { return (value || "").toString().trim(); }
-
 function reviewedRows(rows) {
   return rows.map((r) => ({ row: r, ts: parseTimestamp(r.qa_timestamp) })).filter((x) => x.ts !== null);
 }
-
 function inRange(ts, start, end) {
   if (start === null || end === null) return true;
   return ts >= start && ts < end;
 }
-
 function classify(qaStatus) {
   const s = norm(qaStatus).toLowerCase();
   if (s === "approved") return "approved";
   if (s === "rejected") return "rejected";
   return "other";
 }
-
 function qcUserKey(row) { return norm(row.qc_user_email_id || row.qc_user_id) || "(unknown QC user)"; }
 function qaReviewerKey(row) { return norm(row.qa_reviewer) || "(unknown reviewer)"; }
 
@@ -426,7 +453,8 @@ function summarize(rowsWithTs) {
   const reviewed = rowsWithTs.length;
   const decided = approved + rejected;
   const approvalRate = decided > 0 ? (approved / decided) * 100 : null;
-  return { reviewed, approved, rejected, other, approvalRate };
+  const rejectionRate = decided > 0 ? (rejected / decided) * 100 : null;
+  return { reviewed, approved, rejected, other, approvalRate, rejectionRate };
 }
 
 function groupByField(rowsWithTs, fieldGetter, fallbackLabel) {
@@ -438,7 +466,6 @@ function groupByField(rowsWithTs, fieldGetter, fallbackLabel) {
   }
   const groups = [];
   for (const [key, entries] of map.entries()) groups.push({ key, ...summarize(entries) });
-  groups.sort((a, b) => b.reviewed - a.reviewed);
   return groups;
 }
 
@@ -459,35 +486,108 @@ function filterInWindow(inWindow, { status, qcUser, qaReviewer } = {}) {
   });
 }
 
-// ============================================================================
-// FORMATTING HELPERS
-// ============================================================================
-const IST_TZ = "Asia/Kolkata";
+// 15-day trend of daily reviewed count per QC user (top N).
+function buildTrend(reviewedRowsWithTs, nowUtc) {
+  const parts = istWallClockParts(nowUtc);
+  const today = istMidnightUtc(parts.y, parts.m, parts.d);
+  const days = [];
+  for (let i = TREND_WINDOW_DAYS - 1; i >= 0; i--) days.push(addDaysUtc(today, -i));
+  const windowStart = days[0];
+  const windowEnd = addDaysUtc(today, 1);
 
+  const dayMs = 24 * 60 * 60 * 1000;
+  const userMap = new Map();
+  for (const { row, ts } of reviewedRowsWithTs) {
+    if (ts < windowStart || ts >= windowEnd) continue;
+    const user = qcUserKey(row);
+    if (!userMap.has(user)) userMap.set(user, new Array(TREND_WINDOW_DAYS).fill(0));
+    const tp = istWallClockParts(ts);
+    const rowMidnight = istMidnightUtc(tp.y, tp.m, tp.d);
+    const dayIdx = Math.round((rowMidnight - windowStart) / dayMs);
+    if (dayIdx >= 0 && dayIdx < TREND_WINDOW_DAYS) userMap.get(user)[dayIdx]++;
+  }
+
+  const users = [...userMap.entries()].map(([user, counts]) => ({
+    user, counts, total: counts.reduce((a, b) => a + b, 0),
+  }));
+  users.sort((a, b) => b.total - a.total);
+  const topUsers = users.slice(0, TREND_TOP_USERS);
+  const maxValue = Math.max(1, ...topUsers.flatMap((u) => u.counts));
+  return { days, users: topUsers, maxValue, totalUsers: users.length, hasData: topUsers.length > 0 };
+}
+
+// ============================================================================
+// SORTING
+// ============================================================================
+// Nulls always sink to bottom regardless of direction.
+function sortGroups(groups, column, dir) {
+  const mult = dir === "asc" ? 1 : -1;
+  return [...groups].sort((a, b) => {
+    const av = a[column] == null ? null : a[column];
+    const bv = b[column] == null ? null : b[column];
+    if (av === null && bv === null) return 0;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    if (column === "key") return mult * String(av).toLowerCase().localeCompare(String(bv).toLowerCase());
+    return mult * (av - bv);
+  });
+}
+
+function sortEntries(entries, column, dir) {
+  const mult = dir === "asc" ? 1 : -1;
+  const getVal = (e) => {
+    switch (column) {
+      case "ts": return e.ts.getTime();
+      case "enterprise": return norm(e.row.enterprise_name).toLowerCase();
+      case "vin": return norm(e.row.vin_name).toLowerCase();
+      case "qcUser": return qcUserKey(e.row).toLowerCase();
+      case "reviewer": return qaReviewerKey(e.row).toLowerCase();
+      case "status": return classify(e.row.qa_status);
+      case "reason": return norm(e.row.qa_reason).toLowerCase();
+      default: return 0;
+    }
+  };
+  return [...entries].sort((a, b) => {
+    const av = getVal(a), bv = getVal(b);
+    if (typeof av === "string" && typeof bv === "string") return mult * av.localeCompare(bv);
+    return mult * (av - bv);
+  });
+}
+
+// ============================================================================
+// FORMATTING
+// ============================================================================
 function formatIST(date) {
   return new Intl.DateTimeFormat("en-IN", {
     timeZone: IST_TZ, day: "2-digit", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit", hour12: true,
   }).format(date) + " IST";
 }
-
 function formatISTShort(date) {
   return new Intl.DateTimeFormat("en-IN", {
     timeZone: IST_TZ, day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: true,
   }).format(date);
 }
-
 function formatDayIST(date) {
   return new Intl.DateTimeFormat("en-IN", { timeZone: IST_TZ, day: "2-digit", month: "short", year: "numeric" }).format(date);
 }
+function formatDayShort(date) {
+  return new Intl.DateTimeFormat("en-IN", { timeZone: IST_TZ, day: "2-digit", month: "short" }).format(date);
+}
 
-function rateBucket(rate) {
+function approvalBucket(rate) {
   if (rate === null || rate === undefined) return "none";
   if (rate >= 90) return "high";
   if (rate >= 75) return "mid";
   return "low";
 }
-
+// For rejection rate the color logic is inverted (low rejection = good = green).
+function rejectionBucket(rate) {
+  if (rate === null || rate === undefined) return "none";
+  if (rate <= 10) return "rejection-low";  // good (green)
+  if (rate <= 25) return "rejection-mid";  // caution (amber)
+  return "rejection-high";                  // bad (red)
+}
 function formatRate(rate) { return (rate === null || rate === undefined) ? "—" : rate.toFixed(1) + "%"; }
 
 function escapeHtml(str) {
@@ -498,7 +598,7 @@ function buildReportText(report) {
   const { label, summary, byQcUser } = report;
   const lines = [];
   lines.push(`QA Daily Report — ${label}`);
-  lines.push(`Reviewed: ${summary.reviewed} | Approved: ${summary.approved} (${formatRate(summary.approvalRate)}) | Rejected: ${summary.rejected}` +
+  lines.push(`Reviewed: ${summary.reviewed} | Approved: ${summary.approved} (${formatRate(summary.approvalRate)}) | Rejected: ${summary.rejected} (${formatRate(summary.rejectionRate)})` +
     (summary.other ? ` | Other: ${summary.other}` : ""));
   lines.push("");
   lines.push("QC User Breakdown:");
@@ -506,7 +606,7 @@ function buildReportText(report) {
     lines.push("  (no videos reviewed in this period)");
   } else {
     for (const g of byQcUser) {
-      lines.push(`  - ${g.key}: ${g.reviewed} reviewed, ${g.approved} approved, ${g.rejected} rejected (${formatRate(g.approvalRate)})`);
+      lines.push(`  - ${g.key}: ${g.reviewed} reviewed, ${g.approved} approved (${formatRate(g.approvalRate)}), ${g.rejected} rejected (${formatRate(g.rejectionRate)})`);
     }
   }
   return lines.join("\n");
@@ -520,35 +620,34 @@ let STATE = {
   generatedAt: null,
   totalRows: 0,
   activeRange: { key: "today", label: "Today", start: null, end: null },
-  picker: {
-    open: false,
-    // Calendar month currently displayed as {y, m} in local (UTC-based) coordinates.
-    viewMonth: null,
-    // Pending custom selection (IST midnight-anchored UTC Dates).
-    pickStart: null,
-    pickEnd: null,
+  picker: { open: false, viewMonth: null, pickStart: null, pickEnd: null },
+  sort: {
+    qcUser: { column: "reviewed", dir: "desc" },
+    qaReviewer: { column: "reviewed", dir: "desc" },
   },
+};
+
+const MODAL_STATE = {
+  rows: [],
+  sort: { column: "ts", dir: "desc" },
+  title: "",
+  subtitle: "",
 };
 
 // ============================================================================
 // THEME
 // ============================================================================
-function currentTheme() {
-  return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
-}
-
+function currentTheme() { return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light"; }
 function setTheme(theme) {
   if (theme === "dark") document.documentElement.setAttribute("data-theme", "dark");
   else document.documentElement.removeAttribute("data-theme");
   try { localStorage.setItem("qa-dashboard-theme", theme); } catch (_) {}
   renderThemeIcon();
 }
-
 function toggleTheme() { setTheme(currentTheme() === "dark" ? "light" : "dark"); }
 
 const ICON_SUN = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
 const ICON_MOON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-
 function renderThemeIcon() {
   const el = document.getElementById("theme-icon");
   if (!el) return;
@@ -561,14 +660,11 @@ function renderThemeIcon() {
 function openPicker() {
   const range = STATE.activeRange;
   const now = new Date();
-  // Choose the calendar month to display: use current range's start month if custom, else today.
   const anchor = range.key === "custom" && range.start ? range.start : now;
   const parts = istWallClockParts(anchor);
   STATE.picker.viewMonth = { y: parts.y, m: parts.m };
-  // Prefill pending selection if we're on a custom range so the highlight shows what's active.
   if (range.key === "custom" && range.start && range.end) {
     STATE.picker.pickStart = range.start;
-    // range.end is exclusive (midnight of day after last day) — pick display end is the last included day.
     STATE.picker.pickEnd = addDaysUtc(range.end, -1);
   } else {
     STATE.picker.pickStart = null;
@@ -580,14 +676,12 @@ function openPicker() {
   document.getElementById("daterange-trigger").setAttribute("aria-expanded", "true");
   document.getElementById("daterange-panel").classList.remove("is-hidden");
 }
-
 function closePicker() {
   STATE.picker.open = false;
   document.getElementById("daterange-trigger").classList.remove("is-open");
   document.getElementById("daterange-trigger").setAttribute("aria-expanded", "false");
   document.getElementById("daterange-panel").classList.add("is-hidden");
 }
-
 function togglePicker() { STATE.picker.open ? closePicker() : openPicker(); }
 
 function applyPreset(key) {
@@ -599,43 +693,35 @@ function applyPreset(key) {
   render();
 }
 
-// Records a click on a calendar day. `cellDate` is a UTC Date representing IST midnight
-// of that calendar day.
 function pickDay(cellDate) {
   const p = STATE.picker;
   if (!p.pickStart || (p.pickStart && p.pickEnd)) {
-    // Fresh selection.
     p.pickStart = cellDate;
     p.pickEnd = null;
     renderPicker();
     return;
   }
-  // p.pickStart is set, p.pickEnd is null → this click sets the end.
   let start = p.pickStart, end = cellDate;
   if (end < start) { const t = start; start = end; end = t; }
   p.pickStart = start;
   p.pickEnd = end;
   applyCustomRange();
 }
-
 function applyCustomRange() {
   const { pickStart, pickEnd } = STATE.picker;
   if (!pickStart || !pickEnd) return;
-  // pickEnd is midnight of the last included day — range end is midnight of the day after (exclusive).
   const endExclusive = addDaysUtc(pickEnd, 1);
   const label = `${formatDayIST(pickStart)} → ${formatDayIST(pickEnd)}`;
   STATE.activeRange = { key: "custom", label, start: pickStart, end: endExclusive };
   closePicker();
   render();
 }
-
 function navigateCalendar(deltaMonths) {
   const vm = STATE.picker.viewMonth;
   const nd = new Date(Date.UTC(vm.y, vm.m + deltaMonths, 1));
   STATE.picker.viewMonth = { y: nd.getUTCFullYear(), m: nd.getUTCMonth() };
   renderPicker();
 }
-
 function clearCustom() {
   STATE.picker.pickStart = null;
   STATE.picker.pickEnd = null;
@@ -646,13 +732,9 @@ function renderPicker() {
   const p = STATE.picker;
   if (!p.viewMonth) return;
   const { y, m } = p.viewMonth;
-
-  // Build 42 cells (6 rows × 7 days), Sunday-first.
   const firstOfMonth = new Date(Date.UTC(y, m, 1));
-  const firstWeekday = firstOfMonth.getUTCDay(); // 0=Sun
-  const daysInMonth = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  const firstWeekday = firstOfMonth.getUTCDay();
   const monthName = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(firstOfMonth);
-
   const todayParts = istWallClockParts(new Date());
 
   const cells = [];
@@ -665,9 +747,7 @@ function renderPicker() {
     const midnight = istMidnightUtc(cy, cm, cd);
     const isAdjacent = cm !== m;
     const isToday = cy === todayParts.y && cm === todayParts.m && cd === todayParts.d;
-
-    let inRangeClass = "";
-    let rangeStart = false, rangeEnd = false;
+    let rangeStart = false, rangeEnd = false, inRangeClass = "";
     if (p.pickStart && p.pickEnd) {
       if (midnight.getTime() === p.pickStart.getTime()) rangeStart = true;
       if (midnight.getTime() === p.pickEnd.getTime()) rangeEnd = true;
@@ -675,22 +755,11 @@ function renderPicker() {
     } else if (p.pickStart) {
       if (midnight.getTime() === p.pickStart.getTime()) rangeStart = true;
     }
-
     const singleDay = rangeStart && rangeEnd && p.pickStart && p.pickEnd && p.pickStart.getTime() === p.pickEnd.getTime();
-
-    cells.push({
-      y: cy, m: cm, d: cd,
-      midnight,
-      adjacent: isAdjacent,
-      today: isToday,
-      rangeStart, rangeEnd,
-      inRangeClass,
-      singleDay,
-    });
+    cells.push({ y: cy, m: cm, d: cd, midnight, adjacent: isAdjacent, today: isToday, rangeStart, rangeEnd, inRangeClass, singleDay });
   }
 
-  const weekdays = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
-  const weekdaysHtml = weekdays.map((w) => `<div>${w}</div>`).join("");
+  const weekdaysHtml = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"].map((w) => `<div>${w}</div>`).join("");
   const daysHtml = cells.map((c) => {
     const classes = ["cal-day"];
     if (c.adjacent) classes.push("is-adjacent");
@@ -702,7 +771,6 @@ function renderPicker() {
     return `<button type="button" class="${classes.join(" ")}" data-cal-day="${c.midnight.toISOString()}">${c.d}</button>`;
   }).join("");
 
-  // Preset list
   const activeKey = STATE.activeRange.key;
   const grouped = new Map();
   for (const preset of PRESETS) {
@@ -743,38 +811,160 @@ function renderPicker() {
 }
 
 // ============================================================================
-// TRIGGER LABEL
+// TREND CHART
 // ============================================================================
-function updateTriggerLabel() {
-  document.getElementById("daterange-label").textContent = STATE.activeRange.label;
+function renderTrendChart(trend) {
+  if (!trend.hasData) {
+    return `<div class="chart-panel chart-empty">No videos reviewed in the last ${TREND_WINDOW_DAYS} days.</div>`;
+  }
+
+  const W = 900, H = 300;
+  const padL = 44, padR = 16, padT = 16, padB = 44;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  const xForDay = (i) => padL + (trend.days.length === 1 ? plotW / 2 : (i / (trend.days.length - 1)) * plotW);
+  const yForValue = (v) => padT + plotH - (v / trend.maxValue) * plotH;
+
+  // Y-axis ticks — pick a step that yields 4-5 nice values.
+  const rawMax = trend.maxValue;
+  let step = 1;
+  if (rawMax > 10) step = Math.ceil(rawMax / 5);
+  const yTicks = [];
+  for (let t = 0; t <= rawMax; t += step) yTicks.push(t);
+  if (yTicks[yTicks.length - 1] < rawMax) yTicks.push(rawMax);
+
+  let gridLines = "", yLabels = "";
+  for (const t of yTicks) {
+    const y = yForValue(t);
+    gridLines += `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="var(--line)" stroke-width="1" stroke-dasharray="2,3"/>`;
+    yLabels += `<text x="${padL - 8}" y="${y + 3}" text-anchor="end" font-family="var(--font-mono)" font-size="10" fill="var(--ink-soft)">${t}</text>`;
+  }
+
+  // X-axis labels — every 2nd day to keep it uncluttered.
+  const labelInterval = trend.days.length > 10 ? 2 : 1;
+  let xLabels = "";
+  trend.days.forEach((d, i) => {
+    if (i % labelInterval !== 0 && i !== trend.days.length - 1) return;
+    const label = formatDayShort(d);
+    xLabels += `<text x="${xForDay(i)}" y="${padT + plotH + 20}" text-anchor="middle" font-family="var(--font-mono)" font-size="10" fill="var(--ink-soft)">${label}</text>`;
+  });
+
+  let lines = "";
+  trend.users.forEach((u, idx) => {
+    const color = `var(--chart-${(idx % 6) + 1})`;
+    const points = u.counts.map((c, i) => `${xForDay(i).toFixed(2)},${yForValue(c).toFixed(2)}`).join(" ");
+    lines += `<polyline fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" points="${points}"/>`;
+    u.counts.forEach((c, i) => {
+      const dateStr = formatDayShort(trend.days[i]);
+      lines += `<circle cx="${xForDay(i)}" cy="${yForValue(c)}" r="3.5" fill="${color}" stroke="var(--surface)" stroke-width="1.5"><title>${escapeHtml(u.user)} · ${dateStr}: ${c} reviewed</title></circle>`;
+    });
+  });
+
+  const baseline = `<line x1="${padL}" y1="${padT + plotH}" x2="${W - padR}" y2="${padT + plotH}" stroke="var(--ink-soft)" stroke-width="1"/>`;
+
+  const legend = trend.users.map((u, idx) => {
+    const color = `var(--chart-${(idx % 6) + 1})`;
+    return `<span class="legend-item"><span class="legend-dot" style="background:${color}"></span>${escapeHtml(u.user)} <span class="legend-total">(${u.total})</span></span>`;
+  }).join("");
+
+  const moreUsersNote = trend.totalUsers > TREND_TOP_USERS
+    ? `<span class="section-note">showing top ${TREND_TOP_USERS} of ${trend.totalUsers}</span>` : "";
+
+  return `
+    <div class="chart-panel">
+      <div class="chart-legend">${legend}</div>
+      <div class="chart-svg-wrap">
+        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" class="trend-chart" role="img" aria-label="Day-on-day trend of reviewed videos per QC user">
+          ${gridLines}
+          ${baseline}
+          ${lines}
+          ${yLabels}
+          ${xLabels}
+        </svg>
+      </div>
+      ${moreUsersNote}
+    </div>
+  `;
 }
 
 // ============================================================================
-// RENDERING (main content)
+// BREAKDOWN TABLE (with sort)
 // ============================================================================
+function sortHeader(label, column, sortState, tableKey, numeric) {
+  const isActive = sortState.column === column;
+  const arrow = isActive ? (sortState.dir === "asc" ? "↑" : "↓") : "↕";
+  const classes = ["sortable"];
+  if (numeric) classes.push("num");
+  if (isActive) classes.push("is-sorted");
+  return `<th class="${classes.join(" ")}" data-sort="${tableKey}:${column}" role="button" tabindex="0" aria-sort="${isActive ? (sortState.dir === "asc" ? "ascending" : "descending") : "none"}">
+    <span class="sort-label">${label}</span><span class="sort-arrow">${arrow}</span>
+  </th>`;
+}
+
 function numCell(count, drill) {
   if (count === 0) return `<td class="num"><span class="num-zero">0</span></td>`;
   const attrs = Object.entries(drill).map(([k, v]) => `data-${k}="${escapeHtml(v)}"`).join(" ");
   return `<td class="num"><button class="num-btn" ${attrs}>${count}</button></td>`;
 }
 
-function renderBreakdownTable(groups, headLabel, keyDrillAttr) {
-  if (groups.length === 0) {
+function ratePillCell(rate, kind) {
+  const bucket = kind === "approval" ? approvalBucket(rate) : rejectionBucket(rate);
+  const cls = kind === "approval" ? `rate-pill--${bucket}` : `rate-pill--${bucket}`;
+  return `<td class="num"><span class="rate-pill ${cls}">${formatRate(rate)}</span></td>`;
+}
+
+function renderBreakdownTable(groups, headLabel, keyDrillAttr, tableKey) {
+  const sortState = STATE.sort[tableKey];
+  const sorted = sortGroups(groups, sortState.column, sortState.dir);
+
+  if (sorted.length === 0) {
     return `<div class="table-wrap"><table class="ledger"><thead><tr>
-      <th>${headLabel}</th><th class="num">Reviewed</th><th class="num">Approved</th><th class="num">Rejected</th><th class="num">Approval Rate</th>
-      </tr></thead><tbody><tr class="muted-row"><td colspan="5">No videos reviewed in this period.</td></tr></tbody></table></div>`;
+      <th>${headLabel}</th>
+      <th class="num">Reviewed</th><th class="num">Approved</th><th class="num">Rejected</th>
+      <th class="num">Approval</th><th class="num">Rejection</th>
+    </tr></thead><tbody><tr class="muted-row"><td colspan="6">No videos reviewed in this period.</td></tr></tbody></table></div>`;
   }
-  const rows = groups.map((g) => `<tr>
+
+  const headers = [
+    sortHeader(headLabel, "key", sortState, tableKey, false),
+    sortHeader("Reviewed", "reviewed", sortState, tableKey, true),
+    sortHeader("Approved", "approved", sortState, tableKey, true),
+    sortHeader("Rejected", "rejected", sortState, tableKey, true),
+    sortHeader("Approval", "approvalRate", sortState, tableKey, true),
+    sortHeader("Rejection", "rejectionRate", sortState, tableKey, true),
+  ].join("");
+
+  const rows = sorted.map((g) => `<tr>
     <td>${escapeHtml(g.key)}</td>
     ${numCell(g.reviewed, { drill: "group-reviewed", "group-type": keyDrillAttr, key: g.key })}
     ${numCell(g.approved, { drill: "group-approved", "group-type": keyDrillAttr, key: g.key })}
     ${numCell(g.rejected, { drill: "group-rejected", "group-type": keyDrillAttr, key: g.key })}
-    <td class="num"><span class="rate-pill rate-pill--${rateBucket(g.approvalRate)}">${formatRate(g.approvalRate)}</span></td>
+    ${ratePillCell(g.approvalRate, "approval")}
+    ${ratePillCell(g.rejectionRate, "rejection")}
   </tr>`).join("");
-  return `<div class="table-wrap"><table class="ledger"><thead><tr>
-    <th>${headLabel}</th><th class="num">Reviewed</th><th class="num">Approved</th><th class="num">Rejected</th><th class="num">Approval Rate</th>
-    </tr></thead><tbody>${rows}</tbody></table></div>`;
+
+  return `<div class="table-wrap"><table class="ledger"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
+
+function handleSortClick(spec) {
+  const [tableKey, column] = spec.split(":");
+  const currentSort = STATE.sort[tableKey];
+  if (!currentSort) return;
+  if (currentSort.column === column) {
+    currentSort.dir = currentSort.dir === "asc" ? "desc" : "asc";
+  } else {
+    currentSort.column = column;
+    // Text columns default to asc, numbers to desc.
+    currentSort.dir = column === "key" ? "asc" : "desc";
+  }
+  render();
+}
+
+// ============================================================================
+// MAIN RENDER
+// ============================================================================
+function updateTriggerLabel() { document.getElementById("daterange-label").textContent = STATE.activeRange.label; }
 
 let CURRENT_REPORT = null;
 
@@ -790,8 +980,12 @@ function render() {
   CURRENT_REPORT = report;
   const s = report.summary;
 
+  const trend = buildTrend(STATE.reviewedRows, new Date());
+
   const otherHint = s.other > 0 ? `<p class="stat-card-sub">${s.other} other status</p>` : "";
   const otherDisabled = s.other === 0 ? "disabled" : "";
+  const approvedRate = s.approvalRate !== null ? `<p class="stat-card-rate">${formatRate(s.approvalRate)}</p>` : "";
+  const rejectedRate = s.rejectionRate !== null ? `<p class="stat-card-rate">${formatRate(s.rejectionRate)}</p>` : "";
 
   const html = `
     <section class="summary-grid">
@@ -802,17 +996,19 @@ function render() {
       <button type="button" class="stat-card stat-card--approved is-clickable" data-drill="card-approved">
         <p class="stat-card-label">Approved <span class="stat-card-hint">view →</span></p>
         <p class="stat-card-value">${s.approved}</p>
+        ${approvedRate}
       </button>
       <button type="button" class="stat-card stat-card--rejected is-clickable" data-drill="card-rejected">
         <p class="stat-card-label">Rejected <span class="stat-card-hint">view →</span></p>
         <p class="stat-card-value">${s.rejected}</p>
+        ${rejectedRate}
       </button>
       <button type="button" class="stat-card ${s.other > 0 ? "is-clickable" : ""}" data-drill="card-other" ${otherDisabled}>
         <p class="stat-card-label">QC Users Involved ${s.other > 0 ? '<span class="stat-card-hint">view other →</span>' : ''}</p>
         <p class="stat-card-value">${report.byQcUser.length}</p>
         ${otherHint}
       </button>
-      <div class="stamp is-${rateBucket(s.approvalRate)}">
+      <div class="stamp is-${approvalBucket(s.approvalRate)}">
         <span class="stamp-eyebrow">Approval</span>
         <span class="stamp-value">${formatRate(s.approvalRate)}</span>
         <span class="stamp-caption">Rate</span>
@@ -821,10 +1017,18 @@ function render() {
 
     <section class="section">
       <div class="section-head">
+        <h2 class="section-title">Day-on-Day Trend</h2>
+        <span class="section-note">last ${TREND_WINDOW_DAYS} days · videos reviewed per QC user</span>
+      </div>
+      ${renderTrendChart(trend)}
+    </section>
+
+    <section class="section">
+      <div class="section-head">
         <h2 class="section-title">QC User Breakdown</h2>
         <button class="copy-btn" id="copy-btn">Copy report for management</button>
       </div>
-      ${renderBreakdownTable(report.byQcUser, "QC User", "qc-user")}
+      ${renderBreakdownTable(report.byQcUser, "QC User", "qc-user", "qcUser")}
     </section>
 
     <section class="section">
@@ -832,7 +1036,7 @@ function render() {
         <h2 class="section-title">QA Reviewer Breakdown</h2>
         <span class="section-note">Who on the QA team reviewed these videos</span>
       </div>
-      ${renderBreakdownTable(report.byReviewer, "QA Reviewer", "qa-reviewer")}
+      ${renderBreakdownTable(report.byReviewer, "QA Reviewer", "qa-reviewer", "qaReviewer")}
     </section>
   `;
 
@@ -840,53 +1044,84 @@ function render() {
 }
 
 // ============================================================================
-// DRILL-DOWN MODAL
+// DRILL-DOWN MODAL (with sort)
 // ============================================================================
 function openDrilldown({ title, subtitle, rows }) {
+  MODAL_STATE.rows = rows;
+  MODAL_STATE.title = title;
+  MODAL_STATE.subtitle = subtitle;
+  MODAL_STATE.sort = { column: "ts", dir: "desc" };
+
   document.getElementById("modal-eyebrow").textContent = STATE.activeRange.label;
   document.getElementById("modal-title").textContent = title;
   document.getElementById("modal-meta").textContent = subtitle;
 
-  const body = document.getElementById("modal-body");
-  if (rows.length === 0) {
-    body.innerHTML = `<div class="modal-empty">No videos match this selection.</div>`;
-  } else {
-    const trs = rows.map(({ row, ts }) => {
-      const status = classify(row.qa_status);
-      const statusLabel = norm(row.qa_status) || "—";
-      const reason = norm(row.qa_reason);
-      const videoUrl = norm(row.video_url);
-      const videoCell = videoUrl
-        ? `<a class="video-link" href="${escapeHtml(videoUrl)}" target="_blank" rel="noopener noreferrer">Open ↗</a>`
-        : `<span class="cell-empty">—</span>`;
-      return `<tr>
-        <td>${escapeHtml(formatISTShort(ts))}</td>
-        <td>${escapeHtml(norm(row.enterprise_name) || "—")}</td>
-        <td>${escapeHtml(norm(row.vin_name) || "—")}</td>
-        <td>${escapeHtml(qcUserKey(row))}</td>
-        <td>${escapeHtml(qaReviewerKey(row))}</td>
-        <td><span class="status-tag status-tag--${status}">${escapeHtml(statusLabel)}</span></td>
-        <td class="cell-reason">${reason ? escapeHtml(reason) : '<span class="cell-empty">—</span>'}</td>
-        <td>${videoCell}</td>
-      </tr>`;
-    }).join("");
-    body.innerHTML = `<table class="ledger">
-      <thead><tr>
-        <th>Reviewed at (IST)</th>
-        <th>Enterprise</th>
-        <th>VIN</th>
-        <th>QC User</th>
-        <th>QA Reviewer</th>
-        <th>Status</th>
-        <th>Reason</th>
-        <th>Video</th>
-      </tr></thead>
-      <tbody>${trs}</tbody>
-    </table>`;
-  }
-
+  renderModalBody();
   document.getElementById("modal").classList.remove("is-hidden");
   document.body.classList.add("is-modal-open");
+}
+
+function renderModalBody() {
+  const body = document.getElementById("modal-body");
+  const { rows, sort } = MODAL_STATE;
+
+  if (rows.length === 0) {
+    body.innerHTML = `<div class="modal-empty">No videos match this selection.</div>`;
+    return;
+  }
+
+  const sortedRows = sortEntries(rows, sort.column, sort.dir);
+
+  const modalSortHeader = (label, col) => {
+    const isActive = sort.column === col;
+    const arrow = isActive ? (sort.dir === "asc" ? "↑" : "↓") : "↕";
+    return `<th class="sortable ${isActive ? "is-sorted" : ""}" data-modal-sort="${col}" role="button" tabindex="0" aria-sort="${isActive ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}">
+      <span class="sort-label">${label}</span><span class="sort-arrow">${arrow}</span></th>`;
+  };
+
+  const trs = sortedRows.map(({ row, ts }) => {
+    const status = classify(row.qa_status);
+    const statusLabel = norm(row.qa_status) || "—";
+    const reason = norm(row.qa_reason);
+    const videoUrl = norm(row.video_url);
+    const videoCell = videoUrl
+      ? `<a class="video-link" href="${escapeHtml(videoUrl)}" target="_blank" rel="noopener noreferrer">Open ↗</a>`
+      : `<span class="cell-empty">—</span>`;
+    return `<tr>
+      <td>${escapeHtml(formatISTShort(ts))}</td>
+      <td>${escapeHtml(norm(row.enterprise_name) || "—")}</td>
+      <td>${escapeHtml(norm(row.vin_name) || "—")}</td>
+      <td>${escapeHtml(qcUserKey(row))}</td>
+      <td>${escapeHtml(qaReviewerKey(row))}</td>
+      <td><span class="status-tag status-tag--${status}">${escapeHtml(statusLabel)}</span></td>
+      <td class="cell-reason">${reason ? escapeHtml(reason) : '<span class="cell-empty">—</span>'}</td>
+      <td>${videoCell}</td>
+    </tr>`;
+  }).join("");
+
+  body.innerHTML = `<table class="ledger">
+    <thead><tr>
+      ${modalSortHeader("Reviewed at (IST)", "ts")}
+      ${modalSortHeader("Enterprise", "enterprise")}
+      ${modalSortHeader("VIN", "vin")}
+      ${modalSortHeader("QC User", "qcUser")}
+      ${modalSortHeader("QA Reviewer", "reviewer")}
+      ${modalSortHeader("Status", "status")}
+      ${modalSortHeader("Reason", "reason")}
+      <th>Video</th>
+    </tr></thead>
+    <tbody>${trs}</tbody>
+  </table>`;
+}
+
+function handleModalSort(column) {
+  if (MODAL_STATE.sort.column === column) {
+    MODAL_STATE.sort.dir = MODAL_STATE.sort.dir === "asc" ? "desc" : "asc";
+  } else {
+    MODAL_STATE.sort.column = column;
+    MODAL_STATE.sort.dir = column === "ts" ? "desc" : "asc";
+  }
+  renderModalBody();
 }
 
 function closeDrilldown() {
@@ -900,43 +1135,23 @@ function handleDrill(drill, dataset) {
   const inWindow = report.inWindow;
   const periodLabel = report.label;
 
-  if (drill === "card-reviewed") {
-    return openDrilldown({ title: "All reviewed videos", subtitle: `${periodLabel} · ${inWindow.length} videos`, rows: inWindow });
-  }
-  if (drill === "card-approved") {
-    const rows = filterInWindow(inWindow, { status: "approved" });
-    return openDrilldown({ title: "Approved videos", subtitle: `${periodLabel} · ${rows.length} videos`, rows });
-  }
-  if (drill === "card-rejected") {
-    const rows = filterInWindow(inWindow, { status: "rejected" });
-    return openDrilldown({ title: "Rejected videos", subtitle: `${periodLabel} · ${rows.length} videos`, rows });
-  }
-  if (drill === "card-other") {
-    const rows = filterInWindow(inWindow, { status: "other" });
-    return openDrilldown({ title: "Videos with other status", subtitle: `${periodLabel} · ${rows.length} videos`, rows });
-  }
+  if (drill === "card-reviewed") return openDrilldown({ title: "All reviewed videos", subtitle: `${periodLabel} · ${inWindow.length} videos`, rows: inWindow });
+  if (drill === "card-approved") { const rows = filterInWindow(inWindow, { status: "approved" }); return openDrilldown({ title: "Approved videos", subtitle: `${periodLabel} · ${rows.length} videos`, rows }); }
+  if (drill === "card-rejected") { const rows = filterInWindow(inWindow, { status: "rejected" }); return openDrilldown({ title: "Rejected videos", subtitle: `${periodLabel} · ${rows.length} videos`, rows }); }
+  if (drill === "card-other") { const rows = filterInWindow(inWindow, { status: "other" }); return openDrilldown({ title: "Videos with other status", subtitle: `${periodLabel} · ${rows.length} videos`, rows }); }
 
   const groupType = dataset.groupType;
   const key = dataset.key;
   const groupField = groupType === "qc-user" ? "qcUser" : "qaReviewer";
   const groupLabel = groupType === "qc-user" ? "QC User" : "QA Reviewer";
 
-  if (drill === "group-reviewed") {
-    const rows = filterInWindow(inWindow, { [groupField]: key });
-    return openDrilldown({ title: "Reviewed videos", subtitle: `${periodLabel} · ${groupLabel}: ${key} · ${rows.length} videos`, rows });
-  }
-  if (drill === "group-approved") {
-    const rows = filterInWindow(inWindow, { [groupField]: key, status: "approved" });
-    return openDrilldown({ title: "Approved videos", subtitle: `${periodLabel} · ${groupLabel}: ${key} · ${rows.length} videos`, rows });
-  }
-  if (drill === "group-rejected") {
-    const rows = filterInWindow(inWindow, { [groupField]: key, status: "rejected" });
-    return openDrilldown({ title: "Rejected videos", subtitle: `${periodLabel} · ${groupLabel}: ${key} · ${rows.length} videos`, rows });
-  }
+  if (drill === "group-reviewed") { const rows = filterInWindow(inWindow, { [groupField]: key }); return openDrilldown({ title: "Reviewed videos", subtitle: `${periodLabel} · ${groupLabel}: ${key} · ${rows.length} videos`, rows }); }
+  if (drill === "group-approved") { const rows = filterInWindow(inWindow, { [groupField]: key, status: "approved" }); return openDrilldown({ title: "Approved videos", subtitle: `${periodLabel} · ${groupLabel}: ${key} · ${rows.length} videos`, rows }); }
+  if (drill === "group-rejected") { const rows = filterInWindow(inWindow, { [groupField]: key, status: "rejected" }); return openDrilldown({ title: "Rejected videos", subtitle: `${periodLabel} · ${groupLabel}: ${key} · ${rows.length} videos`, rows }); }
 }
 
 // ============================================================================
-// EVENT WIRING (delegated so it survives re-renders)
+// EVENTS
 // ============================================================================
 document.addEventListener("click", (e) => {
   if (e.target.closest("[data-modal-close]")) { closeDrilldown(); return; }
@@ -945,22 +1160,23 @@ document.addEventListener("click", (e) => {
   if (e.target.closest("#theme-btn")) { toggleTheme(); return; }
   if (e.target.closest("#copy-btn")) { handleCopy(); return; }
 
-  // Date picker interactions
   if (e.target.closest("#daterange-trigger")) { togglePicker(); return; }
 
   const presetBtn = e.target.closest("[data-preset]");
   if (presetBtn) { applyPreset(presetBtn.dataset.preset); return; }
-  if (e.target.closest("[data-preset-custom]")) {
-    // "Custom range" heading — just make sure calendar is visible; don't close.
-    return;
-  }
+  if (e.target.closest("[data-preset-custom]")) return;
   const navBtn = e.target.closest("[data-cal-nav]");
   if (navBtn) { navigateCalendar(parseInt(navBtn.dataset.calNav, 10)); return; }
   const dayBtn = e.target.closest("[data-cal-day]");
   if (dayBtn) { pickDay(new Date(dayBtn.dataset.calDay)); return; }
   if (e.target.closest("[data-cal-clear]")) { clearCustom(); return; }
 
-  // Close picker when clicking outside it and outside trigger
+  const modalSortEl = e.target.closest("[data-modal-sort]");
+  if (modalSortEl) { handleModalSort(modalSortEl.dataset.modalSort); return; }
+
+  const sortEl = e.target.closest("[data-sort]");
+  if (sortEl) { handleSortClick(sortEl.dataset.sort); return; }
+
   if (STATE.picker.open && !e.target.closest("#daterange-panel") && !e.target.closest("#daterange-trigger")) {
     closePicker();
   }
@@ -970,9 +1186,16 @@ document.addEventListener("click", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (e.key !== "Escape") return;
-  if (!document.getElementById("modal").classList.contains("is-hidden")) { closeDrilldown(); return; }
-  if (STATE.picker.open) { closePicker(); return; }
+  if (e.key === "Escape") {
+    if (!document.getElementById("modal").classList.contains("is-hidden")) { closeDrilldown(); return; }
+    if (STATE.picker.open) { closePicker(); return; }
+  }
+  // Space/Enter on sort headers
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-sort], [data-modal-sort]")) {
+    e.preventDefault();
+    if (e.target.dataset.modalSort) handleModalSort(e.target.dataset.modalSort);
+    else if (e.target.dataset.sort) handleSortClick(e.target.dataset.sort);
+  }
 });
 
 function handleCopy() {
@@ -1016,12 +1239,7 @@ async function loadDashboard({ isRefresh = false } = {}) {
     STATE.generatedAt = new Date();
     STATE.totalRows = rows.length;
 
-    // On first load, resolve the initial preset's range against "now".
-    if (!isRefresh && STATE.activeRange.start === null && STATE.activeRange.end === null && STATE.activeRange.key !== "allTime") {
-      const range = computePresetRange(STATE.activeRange.key, new Date());
-      STATE.activeRange = { ...STATE.activeRange, start: range.start, end: range.end };
-    } else if (isRefresh && STATE.activeRange.key !== "custom") {
-      // On refresh, re-resolve preset ranges so "today" etc. reflect the new "now".
+    if (STATE.activeRange.key !== "custom") {
       const range = computePresetRange(STATE.activeRange.key, new Date());
       STATE.activeRange = { ...STATE.activeRange, start: range.start, end: range.end };
     }
