@@ -167,21 +167,25 @@
 
   /* ---------- Summary cards ---------- */
   .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr) auto; gap: 14px; align-items: stretch; margin-bottom: 36px; }
-  .stat-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px;
-    display: flex; flex-direction: column; justify-content: space-between; min-height: 96px; text-align: left;
-    font-family: inherit; color: inherit; }
+  .stat-card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px;
+    display: flex; flex-direction: column; justify-content: space-between; min-height: 108px; text-align: left;
+    font-family: inherit; color: inherit; gap: 8px; }
   .stat-card.is-clickable { cursor: pointer; transition: border-color .12s ease, transform .12s ease; }
   .stat-card.is-clickable:hover { border-color: var(--teal); transform: translateY(-1px); }
   .stat-card.is-clickable:active { transform: translateY(0); }
   .stat-card[disabled] { cursor: default; }
   .stat-card[disabled]:hover { border-color: var(--line); transform: none; }
-  .stat-card-label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .stat-card-hint { font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft); opacity: .7; letter-spacing: .05em; }
-  .stat-card-value { font-family: var(--font-mono); font-size: 30px; font-weight: 600; line-height: 1; }
+
+  .stat-card-header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .stat-card-footer { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+
+  .stat-card-label { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+  .stat-card-hint { font-family: var(--font-mono); font-size: 10px; color: var(--ink-soft); opacity: .7; letter-spacing: .05em; white-space: nowrap; }
+  .stat-card-value { font-family: var(--font-mono); font-size: 26px; font-weight: 600; line-height: 1; }
   .stat-card--approved .stat-card-value, .stat-card--approved .stat-card-rate { color: var(--green); }
   .stat-card--rejected .stat-card-value, .stat-card--rejected .stat-card-rate { color: var(--red); }
-  .stat-card-rate { font-family: var(--font-mono); font-size: 14px; font-weight: 600; margin-top: 6px; }
-  .stat-card-sub { font-family: var(--font-mono); font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
+  .stat-card-rate { font-family: var(--font-mono); font-size: 13px; font-weight: 600; line-height: 1; }
+  .stat-card-sub { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-soft); line-height: 1; }
 
   .stamp { --stamp-color: var(--green); width: 108px; height: 108px; border-radius: 50%; border: 3px double var(--stamp-color);
     color: var(--stamp-color); display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -207,6 +211,18 @@
   table.ledger tbody tr:hover td { background: var(--row-hover); }
 
   table.ledger th.num, table.ledger td.num { text-align: right; font-family: var(--font-mono); }
+
+  /* Add breathing room at the left/right edges of section tables (modal has its own). */
+  .table-wrap table.ledger th:first-child,
+  .table-wrap table.ledger td:first-child { padding-left: 24px; }
+  .table-wrap table.ledger th:last-child,
+  .table-wrap table.ledger td:last-child { padding-right: 24px; }
+
+  /* Rejection-reasons matrix table */
+  table.ledger tfoot td { padding: 12px 16px; border-top: 2px solid var(--line); background: var(--surface-alt); font-weight: 700; color: var(--ink); }
+  .table-wrap table.ledger tfoot td:first-child { padding-left: 24px; }
+  .table-wrap table.ledger tfoot td:last-child { padding-right: 24px; }
+  table.ledger td.reason-cell { white-space: normal; max-width: 300px; line-height: 1.4; }
 
   th.sortable { cursor: pointer; user-select: none; }
   th.sortable:hover { color: var(--ink); }
@@ -497,11 +513,15 @@ function buildReport(reviewedRowsWithTs, range) {
   return { label: range.label, summary, byQcUser, byReviewer, inWindow };
 }
 
-function filterInWindow(inWindow, { status, qcUser, qaReviewer } = {}) {
+const REASON_EMPTY_LABEL = "(no reason given)";
+function reasonKey(row) { return norm(row.qa_reason) || REASON_EMPTY_LABEL; }
+
+function filterInWindow(inWindow, { status, qcUser, qaReviewer, qaReason } = {}) {
   return inWindow.filter(({ row }) => {
     if (status && classify(row.qa_status) !== status) return false;
     if (qcUser && qcUserKey(row) !== qcUser) return false;
     if (qaReviewer && qaReviewerKey(row) !== qaReviewer) return false;
+    if (qaReason !== undefined && reasonKey(row) !== qaReason) return false;
     return true;
   });
 }
@@ -574,6 +594,52 @@ function sortEntries(entries, column, dir) {
   });
 }
 
+// Sort reasons in the rejection matrix. `column` is "reason", "total", or a QC user email.
+function sortRejectionMatrix(reasons, sortState) {
+  const mult = sortState.dir === "asc" ? 1 : -1;
+  const { column } = sortState;
+  return [...reasons].sort((a, b) => {
+    if (column === "reason") return mult * a.reason.localeCompare(b.reason);
+    if (column === "total") return mult * (a.total - b.total);
+    const av = a.userCounts[column] || 0;
+    const bv = b.userCounts[column] || 0;
+    return mult * (av - bv);
+  });
+}
+
+// Builds the "QA rejection reasons × QC user" matrix from rows in the current period.
+// Rows = distinct qa_reason values (rejected only). Columns = QC users who had rejections.
+// Each cell = count of rejections for that (reason, qc_user) combo.
+function buildRejectionMatrix(inWindow) {
+  const rejected = inWindow.filter(({ row }) => classify(row.qa_status) === "rejected");
+
+  const reasonUserMap = new Map();
+  const userTotals = new Map();
+  const reasonTotals = new Map();
+
+  for (const { row } of rejected) {
+    const reason = reasonKey(row);
+    const user = qcUserKey(row);
+    if (!reasonUserMap.has(reason)) reasonUserMap.set(reason, new Map());
+    const um = reasonUserMap.get(reason);
+    um.set(user, (um.get(user) || 0) + 1);
+    userTotals.set(user, (userTotals.get(user) || 0) + 1);
+    reasonTotals.set(reason, (reasonTotals.get(reason) || 0) + 1);
+  }
+
+  const users = [...userTotals.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([user, total]) => ({ user, total }));
+
+  const reasons = [...reasonTotals.entries()].map(([reason, total]) => {
+    const userCounts = {};
+    for (const u of users) userCounts[u.user] = reasonUserMap.get(reason).get(u.user) || 0;
+    return { reason, total, userCounts };
+  });
+
+  return { users, reasons, totalRejected: rejected.length };
+}
+
 // ============================================================================
 // FORMATTING
 // ============================================================================
@@ -644,6 +710,7 @@ let STATE = {
   sort: {
     qcUser: { column: "reviewed", dir: "desc" },
     qaReviewer: { column: "reviewed", dir: "desc" },
+    rejectionMatrix: { column: "total", dir: "desc" },
   },
 };
 
@@ -909,10 +976,9 @@ function renderTrendChart(trend) {
     yLabels += `<text x="${padL - 8}" y="${y + 3}" text-anchor="end" font-family="var(--font-mono)" font-size="10" style="fill: var(--ink-soft)">${t}</text>`;
   }
 
-  const labelInterval = trend.days.length > 10 ? 2 : 1;
+  // Show every day label, not just alternates.
   let xLabels = "";
   trend.days.forEach((d, i) => {
-    if (i % labelInterval !== 0 && i !== trend.days.length - 1) return;
     const label = formatDayShort(d);
     xLabels += `<text x="${xForDay(i)}" y="${padT + plotH + 20}" text-anchor="middle" font-family="var(--font-mono)" font-size="10" style="fill: var(--ink-soft)">${label}</text>`;
   });
@@ -1132,8 +1198,59 @@ function renderBreakdownTable(groups, headLabel, keyDrillAttr, tableKey) {
   return `<div class="table-wrap"><table class="ledger"><thead><tr>${headers}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
+function renderRejectionMatrix(matrix) {
+  if (matrix.totalRejected === 0) {
+    return `<div class="table-wrap"><table class="ledger"><thead><tr>
+      <th>Rejection Reason</th><th class="num">Total</th>
+    </tr></thead><tbody><tr class="muted-row"><td colspan="2">No videos rejected in this period.</td></tr></tbody></table></div>`;
+  }
+  const sortState = STATE.sort.rejectionMatrix;
+  const sortedReasons = sortRejectionMatrix(matrix.reasons, sortState);
+
+  const userHeaders = matrix.users.map((u) =>
+    sortHeader(u.user, u.user, sortState, "rejectionMatrix", true)
+  ).join("");
+  const headers = [
+    sortHeader("Rejection Reason", "reason", sortState, "rejectionMatrix", false),
+    sortHeader("Total", "total", sortState, "rejectionMatrix", true),
+    userHeaders,
+  ].join("");
+
+  const rows = sortedReasons.map((r) => {
+    const userCells = matrix.users.map((u) => {
+      const count = r.userCounts[u.user] || 0;
+      return numCell(count, { drill: "rejection-cell", reason: r.reason, key: u.user });
+    }).join("");
+    return `<tr>
+      <td class="reason-cell">${escapeHtml(r.reason)}</td>
+      <td class="num"><strong>${r.total}</strong></td>
+      ${userCells}
+    </tr>`;
+  }).join("");
+
+  // Column totals footer
+  const userTotalCells = matrix.users.map((u) =>
+    `<td class="num"><strong>${u.total}</strong></td>`
+  ).join("");
+  const footer = `<tfoot><tr>
+    <td>Total</td>
+    <td class="num"><strong>${matrix.totalRejected}</strong></td>
+    ${userTotalCells}
+  </tr></tfoot>`;
+
+  return `<div class="table-wrap"><table class="ledger">
+    <thead><tr>${headers}</tr></thead>
+    <tbody>${rows}</tbody>
+    ${footer}
+  </table></div>`;
+}
+
 function handleSortClick(spec) {
-  const [tableKey, column] = spec.split(":");
+  // Split on the first ":" only, so QC user emails in the column part stay intact.
+  const idx = spec.indexOf(":");
+  if (idx === -1) return;
+  const tableKey = spec.substring(0, idx);
+  const column = spec.substring(idx + 1);
   const currentSort = STATE.sort[tableKey];
   if (!currentSort) return;
   if (currentSort.column === column) {
@@ -1141,7 +1258,8 @@ function handleSortClick(spec) {
   } else {
     currentSort.column = column;
     // Text columns default to asc, numbers to desc.
-    currentSort.dir = column === "key" ? "asc" : "desc";
+    const isTextColumn = column === "key" || column === "reason";
+    currentSort.dir = isTextColumn ? "asc" : "desc";
   }
   render();
 }
@@ -1169,31 +1287,51 @@ function render() {
   const trend = buildTrend(STATE.reviewedRows, new Date());
   CURRENT_TREND = trend;
 
-  const otherHint = s.other > 0 ? `<p class="stat-card-sub">${s.other} other status</p>` : "";
+  const otherHint = s.other > 0 ? `<span class="stat-card-sub">${s.other} other status</span>` : "";
   const otherDisabled = s.other === 0 ? "disabled" : "";
-  const approvedRate = s.approvalRate !== null ? `<p class="stat-card-rate">${formatRate(s.approvalRate)}</p>` : "";
-  const rejectedRate = s.rejectionRate !== null ? `<p class="stat-card-rate">${formatRate(s.rejectionRate)}</p>` : "";
+  const approvedRate = s.approvalRate !== null ? `<span class="stat-card-rate">${formatRate(s.approvalRate)}</span>` : "";
+  const rejectedRate = s.rejectionRate !== null ? `<span class="stat-card-rate">${formatRate(s.rejectionRate)}</span>` : "";
 
   const html = `
     <section class="summary-grid">
       <button type="button" class="stat-card is-clickable" data-drill="card-reviewed">
-        <p class="stat-card-label">Reviewed <span class="stat-card-hint">view →</span></p>
-        <p class="stat-card-value">${s.reviewed}</p>
+        <div class="stat-card-header">
+          <span class="stat-card-label">Reviewed</span>
+          <span class="stat-card-hint">view →</span>
+        </div>
+        <div class="stat-card-footer">
+          <span class="stat-card-value">${s.reviewed}</span>
+        </div>
       </button>
       <button type="button" class="stat-card stat-card--approved is-clickable" data-drill="card-approved">
-        <p class="stat-card-label">Approved <span class="stat-card-hint">view →</span></p>
-        <p class="stat-card-value">${s.approved}</p>
-        ${approvedRate}
+        <div class="stat-card-header">
+          <span class="stat-card-label">Approved</span>
+          <span class="stat-card-hint">view →</span>
+        </div>
+        <div class="stat-card-footer">
+          <span class="stat-card-value">${s.approved}</span>
+          ${approvedRate}
+        </div>
       </button>
       <button type="button" class="stat-card stat-card--rejected is-clickable" data-drill="card-rejected">
-        <p class="stat-card-label">Rejected <span class="stat-card-hint">view →</span></p>
-        <p class="stat-card-value">${s.rejected}</p>
-        ${rejectedRate}
+        <div class="stat-card-header">
+          <span class="stat-card-label">Rejected</span>
+          <span class="stat-card-hint">view →</span>
+        </div>
+        <div class="stat-card-footer">
+          <span class="stat-card-value">${s.rejected}</span>
+          ${rejectedRate}
+        </div>
       </button>
       <button type="button" class="stat-card ${s.other > 0 ? "is-clickable" : ""}" data-drill="card-other" ${otherDisabled}>
-        <p class="stat-card-label">QC Users Involved ${s.other > 0 ? '<span class="stat-card-hint">view other →</span>' : ''}</p>
-        <p class="stat-card-value">${report.byQcUser.length}</p>
-        ${otherHint}
+        <div class="stat-card-header">
+          <span class="stat-card-label">QC Users Involved</span>
+          ${s.other > 0 ? '<span class="stat-card-hint">view other →</span>' : ''}
+        </div>
+        <div class="stat-card-footer">
+          <span class="stat-card-value">${report.byQcUser.length}</span>
+          ${otherHint}
+        </div>
       </button>
       <div class="stamp is-${approvalBucket(s.approvalRate)}">
         <span class="stamp-eyebrow">Approval</span>
@@ -1216,6 +1354,14 @@ function render() {
         <span class="section-note">Who on the QA team reviewed these videos</span>
       </div>
       ${renderBreakdownTable(report.byReviewer, "QA Reviewer", "qa-reviewer", "qaReviewer")}
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2 class="section-title">Rejection Reasons</h2>
+        <span class="section-note">why videos were rejected · counts per QC user</span>
+      </div>
+      ${renderRejectionMatrix(buildRejectionMatrix(report.inWindow))}
     </section>
 
     <section class="section">
@@ -1327,6 +1473,18 @@ function handleDrill(drill, dataset) {
   if (drill === "card-approved") { const rows = filterInWindow(inWindow, { status: "approved" }); return openDrilldown({ title: "Approved videos", subtitle: `${periodLabel} · ${rows.length} videos`, rows }); }
   if (drill === "card-rejected") { const rows = filterInWindow(inWindow, { status: "rejected" }); return openDrilldown({ title: "Rejected videos", subtitle: `${periodLabel} · ${rows.length} videos`, rows }); }
   if (drill === "card-other") { const rows = filterInWindow(inWindow, { status: "other" }); return openDrilldown({ title: "Videos with other status", subtitle: `${periodLabel} · ${rows.length} videos`, rows }); }
+
+  // Rejection matrix cell: reason × QC user
+  if (drill === "rejection-cell") {
+    const reason = dataset.reason;
+    const user = dataset.key;
+    const rows = filterInWindow(inWindow, { status: "rejected", qcUser: user, qaReason: reason });
+    return openDrilldown({
+      title: `Rejected: ${reason}`,
+      subtitle: `${periodLabel} · QC User: ${user} · ${rows.length} videos`,
+      rows,
+    });
+  }
 
   const groupType = dataset.groupType;
   const key = dataset.key;
