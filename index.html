@@ -405,14 +405,20 @@
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQQviNsOTXM2LlIs5ipLiil6Nox9r6BH2o-7-WtgLbTKDIltzZlHXxnlWYm7KkJLfr1JsDM69wyevuT/pub?output=csv";
 const IST_TZ = "Asia/Kolkata";
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+// A "day" on this dashboard runs 06:00 IST → next 06:00 IST (QC shift day),
+// so selecting a date filters that 24h window, not calendar midnight.
+const DAY_START_HOUR = 6;
+const DAY_START_OFFSET_MS = DAY_START_HOUR * 60 * 60 * 1000;
 const TREND_WINDOW_DAYS = 15;
 const TREND_TOP_USERS = 6;
 
 // ============================================================================
 // DATE UTILITIES
 // ============================================================================
+// Returns the shift day (y/m/d, weekday) a UTC moment belongs to, where a day
+// runs 06:00 IST → next 06:00 IST. A row at 03:00 IST Oct 11 belongs to Oct 10.
 function istWallClockParts(nowUtc) {
-  const shifted = new Date(nowUtc.getTime() + IST_OFFSET_MS);
+  const shifted = new Date(nowUtc.getTime() + IST_OFFSET_MS - DAY_START_OFFSET_MS);
   return {
     y: shifted.getUTCFullYear(),
     m: shifted.getUTCMonth(),
@@ -420,7 +426,8 @@ function istWallClockParts(nowUtc) {
     weekday: (shifted.getUTCDay() + 6) % 7,
   };
 }
-function istMidnightUtc(y, m, d) { return new Date(Date.UTC(y, m, d, 0, 0, 0, 0) - IST_OFFSET_MS); }
+// Start of the shift day y/m/d (06:00 IST) as a UTC instant.
+function istMidnightUtc(y, m, d) { return new Date(Date.UTC(y, m, d, DAY_START_HOUR, 0, 0, 0) - IST_OFFSET_MS); }
 function addDaysUtc(date, days) { return new Date(date.getTime() + days * 24 * 60 * 60 * 1000); }
 
 const PRESETS = [
